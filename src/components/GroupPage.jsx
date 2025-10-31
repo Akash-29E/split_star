@@ -2,7 +2,7 @@ import './GroupPage.css'
 import { groupService } from '../services/groups'
 import Toast from './Toast'
 import useToast from '../hooks/useToast'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isSharedAccess, authenticatedMember }) {
   // Use initialGroupData if provided (for shared access), otherwise use groupData
@@ -37,6 +37,9 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   const [selectedMembers, setSelectedMembers] = useState(new Set());
   const [memberExpenseData, setMemberExpenseData] = useState({});
   const [globalActiveInputType, setGlobalActiveInputType] = useState('amount');
+  
+  // Track if initial member selection has been made
+  const hasInitializedMembers = useRef(false);
   
   // Splits state
   const [splits, setSplits] = useState([]);
@@ -97,6 +100,15 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     }
   }, [currentGroupData?.members, currentUser, selectedPaidBy?.name]);
 
+  // Select all members by default when group data is loaded (only once on initial load)
+  useEffect(() => {
+    if (currentGroupData?.members && !hasInitializedMembers.current) {
+      const allMemberIds = new Set(currentGroupData.members.map(member => member._id || member.id));
+      setSelectedMembers(allMemberIds);
+      hasInitializedMembers.current = true;
+    }
+  }, [currentGroupData?.members]);
+
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -127,24 +139,42 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     let totalToPay = 0;
     let totalToReceive = 0;
 
+    console.log('=== BALANCE CALCULATION START ===');
+    console.log('Current User:', currentUser);
+    console.log('Is Shared Access:', isSharedAccess);
+    console.log('Authenticated Member:', authenticatedMember);
+
     splits.forEach(split => {
       const totalAmount = parseFloat(split.totalAmount) || parseFloat(split.baseAmount) || 0;
       
       // Find current user's split by matching different possible identifiers
-      const currentUserSplit = split.memberSplits.find(ms => 
-        ms.memberId === currentUser._id ||
-        ms.memberId === currentUser.id ||
-        ms.memberId === currentUser.pin ||
-        ms.memberName === currentUser.name ||
-        ms.memberId === currentUser.name
-      );
+      console.log('--- Processing Split:', split.splitTitle);
+      console.log('Available memberSplits:', split.memberSplits);
+      console.log('Looking for current user:', {
+        _id: currentUser._id,
+        id: currentUser.id,
+        pin: currentUser.pin,
+        name: currentUser.name
+      });
+
+      const currentUserSplit = split.memberSplits.find(ms => {
+        const match = ms.memberId === currentUser._id ||
+                     ms.memberId === currentUser.id ||
+                     ms.memberId === currentUser.pin ||
+                     ms.memberName === currentUser.name ||
+                     ms.memberId === currentUser.name;
+        console.log('Checking memberSplit:', ms, 'Match:', match);
+        return match;
+      });
       
       if (!currentUserSplit) {
-        console.log('Current user not found in split:', split.splitTitle);
+        console.log('❌ Current user not found in split:', split.splitTitle);
         console.log('Looking for:', currentUser);
         console.log('Available memberSplits:', split.memberSplits);
         return;
       }
+
+      console.log('✅ Found current user split:', currentUserSplit);
 
       // Calculate the user's owed amount based on split method
       let userOwedAmount = 0;
@@ -178,7 +208,15 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         totalAmount,
         userOwedAmount,
         userPaidAmount,
-        expenseNetAmount
+        expenseNetAmount,
+        paidBy: split.paidBy,
+        paidByName: split.paidByName,
+        currentUserInfo: {
+          id: currentUser._id,
+          pin: currentUser.pin, 
+          name: currentUser.name
+        },
+        currentUserSplit: currentUserSplit
       });
 
       // If the net amount for this expense is positive, user should receive money
@@ -200,8 +238,8 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
       return;
     }
     
-    if (!amount || selectedMembers.size === 0) {
-      alert('Please enter an amount and select at least one member');
+    if (!amount || selectedMembers.size < 2) {
+      alert('Please enter an amount and select at least 2 members');
       return;
     }
 
@@ -285,10 +323,31 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           console.log('Found member:', member);
           const expenseInfo = memberExpenseData[memberId] || {};
           
-          // Check if this member is the one who paid
+          // Check if this member is the one who paid - more robust comparison
           const isPayer = selectedPaidBy._id === member?._id || 
+                         selectedPaidBy._id === member?.id ||
+                         selectedPaidBy.id === member?._id ||
                          selectedPaidBy.id === member?.id || 
-                         selectedPaidBy.name === member?.name;
+                         selectedPaidBy.name === member?.name ||
+                         selectedPaidBy.pin === member?.pin ||
+                         selectedPaidBy._id?.toString() === member?._id?.toString() ||
+                         selectedPaidBy.id?.toString() === member?.id?.toString();
+          
+          console.log('🔍 Payer check for', member?.name + ':', {
+            isPayer: isPayer,
+            selectedPaidBy: {
+              _id: selectedPaidBy._id,
+              id: selectedPaidBy.id,
+              name: selectedPaidBy.name,
+              pin: selectedPaidBy.pin
+            },
+            member: {
+              _id: member?._id,
+              id: member?.id,
+              name: member?.name,
+              pin: member?.pin
+            }
+          });
           
           return {
             memberId: memberId,
@@ -749,7 +808,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                       type="button"
                       onClick={toggleDropdown}
                     >
-                      Select Members
+                      {selectedMembers.size === 0 ? 'Select Members' : `${selectedMembers.size} Member${selectedMembers.size === 1 ? '' : 's'}`}
                       <svg 
                         width="16" 
                         height="16" 
@@ -943,9 +1002,9 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
             </div>
           </div>
 
-          {/* Splits List Section */}
+          {/* Expense List Section */}
           <div className="expenses-list-section">
-            <h3 className="section-title">Recent Splits</h3>
+            <h3 className="section-title">Expense List</h3>
             <div className="expenses-section">
               {splits.length > 0 ? (
                 <div className="expenses-list">
@@ -970,7 +1029,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                               </span>
                               <span className="expense-separator">•</span>
                               <span className="expense-paidby">
-                                Created by {split.createdByName || 'Unknown'}
+                                Paid by {split.paidByName || split.createdByName || 'Unknown'}
                               </span>
                             </div>
                           </div>
