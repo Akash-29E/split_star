@@ -124,6 +124,52 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     });
   };
 
+  // Calculate current user's total balance
+  const calculateUserBalance = () => {
+    let totalToPay = 0;
+    let totalToReceive = 0;
+
+    splits.forEach(split => {
+      const totalAmount = parseFloat(split.totalAmount) || 0;
+      const currentUserSplit = split.memberSplits.find(ms => ms.memberId === currentUser.name);
+      
+      if (!currentUserSplit) return;
+
+      // Calculate the user's owed amount based on split method
+      let userOwedAmount = 0;
+      const totalShares = split.memberSplits.reduce((sum, ms) => sum + (ms.splitValue.shares || 1), 0);
+
+      switch (split.splitMethod) {
+        case 'equal':
+          userOwedAmount = totalAmount / split.memberSplits.length;
+          break;
+        case 'exact':
+          userOwedAmount = currentUserSplit.splitValue.amount;
+          break;
+        case 'percentage':
+          userOwedAmount = (totalAmount * currentUserSplit.splitValue.percentage) / 100;
+          break;
+        case 'shares':
+          userOwedAmount = (totalAmount * currentUserSplit.splitValue.shares) / totalShares;
+          break;
+        default:
+          userOwedAmount = totalAmount / split.memberSplits.length;
+      }
+
+      // Calculate net amount: what user owes minus what they paid
+      const userPaidAmount = currentUserSplit.paidAmount || 0;
+      const netAmount = userOwedAmount - userPaidAmount;
+
+      if (netAmount > 0) {
+        totalToPay += netAmount; // User owes money
+      } else {
+        totalToReceive += Math.abs(netAmount); // User is owed money
+      }
+    });
+
+    return { totalToPay, totalToReceive };
+  };
+
   const handleAddExpense = async () => {
     if (!splitTitle.trim()) {
       alert('Please enter a title for the split');
@@ -584,6 +630,18 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         </div>
         
         <div className="group-content">
+          {/* User Balance Summary */}
+          <div className="user-balance-summary">
+            <div className="balance-item balance-to-pay">
+              <div className="balance-label">You Owe</div>
+              <div className="balance-amount">${calculateUserBalance().totalToPay.toFixed(2)}</div>
+            </div>
+            <div className="balance-item balance-to-receive">
+              <div className="balance-label">You'll Receive</div>
+              <div className="balance-amount">${calculateUserBalance().totalToReceive.toFixed(2)}</div>
+            </div>
+          </div>
+
           {/* Expense Form Section */}
           <div className="expense-form-section">
             <div className="expense-form">

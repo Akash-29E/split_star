@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import './Toast.css';
 
-const Toast = ({ show, message, type = 'success', onClose, autoHide = true, duration = 80000 }) => {
+const Toast = ({ show, message, type = 'success', onClose, autoHide = true, duration = 3000 }) => {
   useEffect(() => {
     if (show && autoHide) {
       const timer = setTimeout(() => {

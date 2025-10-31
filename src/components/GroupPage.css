@@ -178,6 +178,73 @@
   gap: 2rem;
 }
 
+/* User Balance Summary */
+.user-balance-summary {
+  display: flex !important;
+  gap: 1rem !important;
+  margin-bottom: 2rem !important;
+  height: 80px !important;
+}
+
+.balance-item {
+  flex: 1 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 16px !important;
+  padding: 1rem 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  height: 80px !important;
+  box-sizing: border-box !important;
+}
+
+.balance-item:hover {
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+.balance-to-pay:hover {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.balance-to-receive:hover {
+  border-color: rgba(34, 197, 94, 0.4) !important;
+}
+
+.balance-label {
+  font-family: 'Quicksand', sans-serif !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  margin-bottom: 0.5rem !important;
+  text-align: center !important;
+}
+
+.balance-amount {
+  font-family: 'Quicksand', sans-serif !important;
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+  text-align: center !important;
+}
+
+.balance-to-pay .balance-amount {
+  color: rgba(239, 68, 68, 0.9) !important;
+}
+
+.balance-to-receive .balance-amount {
+  color: rgba(34, 197, 94, 0.9) !important;
+}
+
 /* Expense Form Section */
 .expense-form-section {
   background: rgba(255, 255, 255, 0.1) !important;
