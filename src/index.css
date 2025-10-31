@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+:root {
+  font-family: 'Quicksand', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #023583 0%, #7533bb 50%, #8800a7 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.main-content {
+  padding-top: 100px; /* Account for fixed navbar (80px + 20px margin) */
+  padding-bottom: 2rem;
+  min-height: calc(100vh - 80px); /* Account for navbar height */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}

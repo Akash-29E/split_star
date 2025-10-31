@@ -1,0 +1,31 @@
+:root {
+  --radiant-sky-blue: #023583;
+  --hover-color: #4b0088;
+}
+
+.app {
+  width: 100%;
+  min-height: 100vh;
+  /* background: linear-gradient(135deg, var(--radiant-sky-blue) 0%, #4FC3F7 50%, #177dac 100%); */
+  font-family: 'Quicksand', sans-serif;
+  /* background-attachment: fixed; */
+}
+
+
+
+
+
+
+
+
+
+/* Responsive design for text fields */
+@media (max-width: 768px) {
+  .text-fields-demo {
+    max-width: 400px;
+  }
+  
+  .group-name-field .text-field-label {
+    font-size: 1.1rem;
+  }
+}
