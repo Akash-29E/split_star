@@ -22,9 +22,11 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   // Members dropdown state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
-  // Split dropdown state
-  const [isSplitDropdownOpen, setIsSplitDropdownOpen] = useState(false);
-  const [selectedSplitType, setSelectedSplitType] = useState('Split');
+  // Paid by dropdown state  
+  const [isPaidByDropdownOpen, setIsPaidByDropdownOpen] = useState(false);
+  const [selectedPaidBy, setSelectedPaidBy] = useState(currentUser);
+  
+
   
   // Expense input states
   const [splitTitle, setSplitTitle] = useState('');
@@ -52,8 +54,8 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
       if (isDropdownOpen && !event.target.closest('.members-dropdown')) {
         setIsDropdownOpen(false);
       }
-      if (isSplitDropdownOpen && !event.target.closest('.split-dropdown')) {
-        setIsSplitDropdownOpen(false);
+      if (isPaidByDropdownOpen && !event.target.closest('.paid-by-dropdown')) {
+        setIsPaidByDropdownOpen(false);
       }
     };
 
@@ -61,7 +63,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDropdownOpen, isSplitDropdownOpen]);
+  }, [isDropdownOpen, isPaidByDropdownOpen]);
 
   // Load splits when component mounts
   useEffect(() => {
@@ -84,32 +86,28 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     loadSplits();
   }, [currentGroupData?.uuid]);
 
+  // Ensure selectedPaidBy has a valid name
+  useEffect(() => {
+    if (currentGroupData?.members && (!selectedPaidBy?.name || selectedPaidBy.name === 'Unknown User')) {
+      // Set to current user if available, otherwise first member
+      const validPaidBy = currentUser?.name ? currentUser : currentGroupData.members[0];
+      if (validPaidBy && validPaidBy.name) {
+        setSelectedPaidBy(validPaidBy);
+      }
+    }
+  }, [currentGroupData?.members, currentUser, selectedPaidBy?.name]);
+
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const toggleSplitDropdown = () => {
-    setIsSplitDropdownOpen(!isSplitDropdownOpen);
+  const togglePaidByDropdown = () => {
+    setIsPaidByDropdownOpen(!isPaidByDropdownOpen);
   };
 
-  const handleSplitTypeSelect = (type) => {
-    setSelectedSplitType(type);
-    setIsSplitDropdownOpen(false);
-    
-    // Reset member expense data when changing split types
-    // This ensures users get fresh fields for the new calculation method
-    if (currentGroupData) {
-      const resetMemberData = currentGroupData.members.reduce((acc, member) => {
-        acc[member._id] = {
-          included: true,
-          amount: '',
-          percentage: '',
-          shares: ''
-        };
-        return acc;
-      }, {});
-      setMemberExpenseData(resetMemberData);
-    }
+  const handlePaidBySelect = (member) => {
+    setSelectedPaidBy(member);
+    setIsPaidByDropdownOpen(false);
   };
 
   const toggleSplitAccordion = (splitId) => {
@@ -130,43 +128,69 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     let totalToReceive = 0;
 
     splits.forEach(split => {
-      const totalAmount = parseFloat(split.totalAmount) || 0;
-      const currentUserSplit = split.memberSplits.find(ms => ms.memberId === currentUser.name);
+      const totalAmount = parseFloat(split.totalAmount) || parseFloat(split.baseAmount) || 0;
       
-      if (!currentUserSplit) return;
+      // Find current user's split by matching different possible identifiers
+      const currentUserSplit = split.memberSplits.find(ms => 
+        ms.memberId === currentUser._id ||
+        ms.memberId === currentUser.id ||
+        ms.memberId === currentUser.pin ||
+        ms.memberName === currentUser.name ||
+        ms.memberId === currentUser.name
+      );
+      
+      if (!currentUserSplit) {
+        console.log('Current user not found in split:', split.splitTitle);
+        console.log('Looking for:', currentUser);
+        console.log('Available memberSplits:', split.memberSplits);
+        return;
+      }
 
       // Calculate the user's owed amount based on split method
       let userOwedAmount = 0;
-      const totalShares = split.memberSplits.reduce((sum, ms) => sum + (ms.splitValue.shares || 1), 0);
+      const totalShares = split.memberSplits.reduce((sum, ms) => sum + (ms.splitValue?.shares || 1), 0);
 
       switch (split.splitMethod) {
         case 'equal':
           userOwedAmount = totalAmount / split.memberSplits.length;
           break;
         case 'exact':
-          userOwedAmount = currentUserSplit.splitValue.amount;
+        case 'amount':
+          userOwedAmount = parseFloat(currentUserSplit.splitValue?.amount) || 0;
           break;
         case 'percentage':
-          userOwedAmount = (totalAmount * currentUserSplit.splitValue.percentage) / 100;
+          userOwedAmount = (totalAmount * (parseFloat(currentUserSplit.splitValue?.percentage) || 0)) / 100;
           break;
         case 'shares':
-          userOwedAmount = (totalAmount * currentUserSplit.splitValue.shares) / totalShares;
+          userOwedAmount = totalShares > 0 ? (totalAmount * (parseInt(currentUserSplit.splitValue?.shares) || 1)) / totalShares : 0;
           break;
         default:
           userOwedAmount = totalAmount / split.memberSplits.length;
       }
 
-      // Calculate net amount: what user owes minus what they paid
-      const userPaidAmount = currentUserSplit.paidAmount || 0;
-      const netAmount = userOwedAmount - userPaidAmount;
+      // Calculate what the user paid for this expense
+      const userPaidAmount = parseFloat(currentUserSplit.paidAmount) || 0;
+      
+      // Simple logic: each expense contributes to either "owe" or "receive"
+      const expenseNetAmount = userPaidAmount - userOwedAmount;
 
-      if (netAmount > 0) {
-        totalToPay += netAmount; // User owes money
-      } else {
-        totalToReceive += Math.abs(netAmount); // User is owed money
+      console.log(`Expense "${split.splitTitle}":`, {
+        totalAmount,
+        userOwedAmount,
+        userPaidAmount,
+        expenseNetAmount
+      });
+
+      // If the net amount for this expense is positive, user should receive money
+      // If negative, user owes money for this expense
+      if (expenseNetAmount > 0) {
+        totalToReceive += expenseNetAmount;
+      } else if (expenseNetAmount < 0) {
+        totalToPay += Math.abs(expenseNetAmount);
       }
     });
 
+    console.log('Final totals - To Pay:', totalToPay, 'To Receive:', totalToReceive);
     return { totalToPay, totalToReceive };
   };
 
@@ -261,10 +285,16 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           console.log('Found member:', member);
           const expenseInfo = memberExpenseData[memberId] || {};
           
+          // Check if this member is the one who paid
+          const isPayer = selectedPaidBy._id === member?._id || 
+                         selectedPaidBy.id === member?.id || 
+                         selectedPaidBy.name === member?.name;
+          
           return {
             memberId: memberId,
             memberName: member?.name || `Test Member ${memberId}`,
             isParticipating: true,
+            paidAmount: isPayer ? (parseFloat(amount) + (parseFloat(amount) * (parseFloat(taxPercentage) || 0) / 100)) : 0,
             splitValue: {
               amount: expenseInfo.amount ? parseFloat(expenseInfo.amount) : 0,
               percentage: expenseInfo.percentage ? parseFloat(expenseInfo.percentage) : 0,
@@ -273,10 +303,14 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           };
         }),
         createdBy: currentUser.pin || currentUser.id || 'unknown',
-        createdByName: currentUser.name || 'Unknown'
+        createdByName: currentUser.name || 'Unknown',
+        paidBy: selectedPaidBy._id || selectedPaidBy.id || selectedPaidBy.pin,
+        paidByName: selectedPaidBy.name || 'Unknown User'
       };
 
       console.log('Current User:', currentUser);
+      console.log('Selected Paid By:', selectedPaidBy);
+      console.log('Paid By Name:', selectedPaidBy.name);
       console.log('Creating split:', splitData);
       console.log('Group UUID:', currentGroupData.uuid);
       
@@ -294,7 +328,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         setTaxPercentage('0');
         setSelectedMembers(new Set());
         setMemberExpenseData({});
-        setSelectedSplitType('Split');
+        setSelectedPaidBy(currentUser);
         
         showSuccess('Expense added successfully!');
       } else {
@@ -499,38 +533,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         }
       }
 
-      // Auto-detect split method based on user input patterns
-      const memberIds = Array.from(selectedMembers);
-      const hasCustomAmounts = memberIds.some(id => {
-        const memberData = id === memberId ? newData[memberId] : prev[id];
-        const expectedEqualAmount = totalAmount / memberIds.length;
-        const actualAmount = parseFloat(memberData?.amount || 0);
-        return Math.abs(actualAmount - expectedEqualAmount) > 0.01;
-      });
-      
-      const hasPercentages = memberIds.some(id => {
-        const memberData = id === memberId ? newData[memberId] : prev[id];
-        const percentage = parseFloat(memberData?.percentage || 0);
-        const expectedEqualPercentage = 100 / memberIds.length;
-        return Math.abs(percentage - expectedEqualPercentage) > 0.01;
-      });
-      
-      const hasCustomShares = memberIds.some(id => {
-        const memberData = id === memberId ? newData[memberId] : prev[id];
-        const shares = parseFloat(memberData?.shares || 1);
-        return shares !== 1;
-      });
-
-      // Update split type based on detected pattern
-      if (field === 'amount' || hasCustomAmounts) {
-        setSelectedSplitType('Amount');
-      } else if (field === 'percentage' || hasPercentages) {
-        setSelectedSplitType('Percentage');
-      } else if (field === 'shares' || hasCustomShares) {
-        setSelectedSplitType('Shares');
-      } else {
-        setSelectedSplitType('Split'); // Equal split
-      }
+      // Split type detection removed - no longer needed
 
       return newData;
     });
@@ -632,13 +635,16 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         <div className="group-content">
           {/* User Balance Summary */}
           <div className="user-balance-summary">
-            <div className="balance-item balance-to-pay">
-              <div className="balance-label">You Owe</div>
-              <div className="balance-amount">${calculateUserBalance().totalToPay.toFixed(2)}</div>
-            </div>
-            <div className="balance-item balance-to-receive">
-              <div className="balance-label">You'll Receive</div>
-              <div className="balance-amount">${calculateUserBalance().totalToReceive.toFixed(2)}</div>
+            <div className="balance-container">
+              <div className="balance-section balance-to-pay">
+                <div className="balance-label">You Owe</div>
+                <div className="balance-amount">${calculateUserBalance().totalToPay.toFixed(2)}</div>
+              </div>
+              <div className="balance-divider"></div>
+              <div className="balance-section balance-to-receive">
+                <div className="balance-label">You'll Receive</div>
+                <div className="balance-amount">${calculateUserBalance().totalToReceive.toFixed(2)}</div>
+              </div>
             </div>
           </div>
 
@@ -646,7 +652,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           <div className="expense-form-section">
             <div className="expense-form">
             <div className="expense-controls">
-              {/* Split Title Input - Full Width on Top */}
+              {/* Split Title and Amount Row - 50% each */}
               <div className="split-title-row">
                 <input 
                   type="text" 
@@ -655,74 +661,12 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                   value={splitTitle}
                   onChange={(e) => setSplitTitle(e.target.value)}
                 />
-              </div>
-
-              <div className="expense-inputs-group">
-                {/* Split Type Dropdown */}
-                <div className="form-group">
-                  <div className="split-dropdown">
-                    <button 
-                      className="split-select" 
-                      type="button"
-                      onClick={toggleSplitDropdown}
-                    >
-                      {selectedSplitType}
-                      <svg 
-                        width="16" 
-                        height="16" 
-                        viewBox="0 0 24 24" 
-                        fill="none" 
-                        xmlns="http://www.w3.org/2000/svg"
-                        style={{
-                          transform: isSplitDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 0.3s ease'
-                        }}
-                      >
-                        <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                    <div className={`split-dropdown-content ${isSplitDropdownOpen ? 'open' : ''}`}>
-                      <div 
-                        className="split-option"
-                        onClick={() => handleSplitTypeSelect('Split')}
-                      >
-                        Split (Equal)
-                      </div>
-                      <div 
-                        className="split-option"
-                        onClick={() => handleSplitTypeSelect('Subsplit')}
-                      >
-                        Subsplit (Equal)
-                      </div>
-                      <div 
-                        className="split-option"
-                        onClick={() => handleSplitTypeSelect('Amount')}
-                      >
-                        Amount
-                      </div>
-                      <div 
-                        className="split-option"
-                        onClick={() => handleSplitTypeSelect('Percentage')}
-                      >
-                        Percentage
-                      </div>
-                      <div 
-                        className="split-option"
-                        onClick={() => handleSplitTypeSelect('Shares')}
-                      >
-                        Shares
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amount Input */}
-                <div className="form-group">
-                  <div className="input-with-prefix">
+                <div className="amount-tax-container">
+                  <div className="input-with-prefix amount-section">
                     <span className="input-prefix">$</span>
                     <input 
                       type="number" 
-                      className="expense-input" 
+                      className="expense-input amount-input" 
                       placeholder="0.00"
                       step="0.01"
                       min="0"
@@ -730,14 +674,10 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                       onChange={(e) => setAmount(e.target.value)}
                     />
                   </div>
-                </div>
-
-                {/* Tax Input */}
-                <div className="form-group">
-                  <div className="input-with-suffix">
+                  <div className="input-with-suffix tax-section">
                     <input 
                       type="number" 
-                      className="expense-input" 
+                      className="expense-input tax-input" 
                       placeholder="0"
                       step="0.01"
                       min="0"
@@ -748,6 +688,58 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                     <span className="input-suffix">%</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="expense-inputs-group">
+                {/* Paid By Dropdown */}
+                <div className="form-group">
+                  <div className="paid-by-dropdown">
+                    <button 
+                      className="paid-by-select paid-by-button" 
+                      type="button"
+                      onClick={togglePaidByDropdown}
+                    >
+                      <span className="paid-by-label">Paid by</span>
+                      <span className="paid-by-separator"></span>
+                      <span className="paid-by-name">{selectedPaidBy.name}</span>
+                      <svg 
+                        width="16" 
+                        height="16" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        style={{
+                          transform: isPaidByDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.3s ease'
+                        }}
+                      >
+                        <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                    <div className={`paid-by-dropdown-content ${isPaidByDropdownOpen ? 'open' : ''}`}>
+                      {currentGroupData?.members?.map((member) => (
+                        <div 
+                          key={member._id || member.id || member.pin}
+                          className="paid-by-option member-option"
+                          onClick={() => handlePaidBySelect(member)}
+                        >
+                          <input
+                            type="radio"
+                            name="paidBy"
+                            checked={selectedPaidBy._id === member._id || selectedPaidBy.name === member.name}
+                            onChange={() => {}} // Controlled by parent click
+                            className="member-radio"
+                          />
+                          <span className="member-name">{member.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+
+
+
 
                 {/* Members Dropdown */}
                 <div className="form-group">

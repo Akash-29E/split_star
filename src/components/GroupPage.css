@@ -180,14 +180,11 @@
 
 /* User Balance Summary */
 .user-balance-summary {
-  display: flex !important;
-  gap: 1rem !important;
   margin-bottom: 2rem !important;
   height: 80px !important;
 }
 
-.balance-item {
-  flex: 1 !important;
+.balance-container {
   background: rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: blur(15px) !important;
   -webkit-backdrop-filter: blur(15px) !important;
@@ -195,27 +192,34 @@
   border-radius: 16px !important;
   padding: 1rem 1.5rem !important;
   display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
   align-items: center !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.3s ease !important;
   height: 80px !important;
   box-sizing: border-box !important;
+  position: relative !important;
 }
 
-.balance-item:hover {
+.balance-container:hover {
   border-color: rgba(255, 255, 255, 0.3) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
   transform: translateY(-2px) !important;
 }
 
-.balance-to-pay:hover {
-  border-color: rgba(239, 68, 68, 0.4) !important;
+.balance-section {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 0 1rem !important;
 }
 
-.balance-to-receive:hover {
-  border-color: rgba(34, 197, 94, 0.4) !important;
+.balance-divider {
+  width: 1px !important;
+  height: 100% !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  margin: 0 1rem !important;
 }
 
 .balance-label {
@@ -256,6 +260,9 @@
   margin-bottom: 2rem !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.3s ease !important;
+  overflow: visible !important;
+  position: relative !important;
+  z-index: 1000 !important;
 }
 
 .expense-form-section:hover {
@@ -327,6 +334,9 @@
   width: 100%;
   margin-bottom: 1rem;
   box-sizing: border-box;
+  display: flex !important;
+  gap: 1rem !important;
+  align-items: center !important;
 }
 
 .expense-input {
@@ -369,10 +379,117 @@
 
 /* Split title input specific styles */
 .split-title-input {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
+  flex: 1 !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Amount and Tax container in title row - unified field appearance */
+.amount-tax-container {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 2px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.amount-tax-container:hover {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.amount-tax-container:focus-within {
+  border-color: var(--hover-color) !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+}
+
+.amount-section {
+  flex: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.75rem 0.5rem 0.75rem 0.875rem !important;
+}
+
+.amount-section .input-prefix {
+  position: relative !important;
+  left: auto !important;
+  margin-right: 0.5rem !important;
+  z-index: 1 !important;
+}
+
+.amount-section .expense-input {
+  padding-left: 1px !important;
+}
+
+.tax-section {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.75rem 0.875rem 0.75rem 0.75rem !important;
+  position: relative !important;
+}
+
+.tax-section .input-suffix {
+  position: relative !important;
+  right: auto !important;
+  margin-left: 0.5rem !important;
+  z-index: 1 !important;
+}
+
+.tax-section .expense-input {
+  padding-right: 0 !important;
+}
+
+.tax-section::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: 100% !important;
+  width: 1px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.amount-input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 0 0 1px !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.amount-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.tax-input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 0 0 0.5rem !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.tax-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 /* Accordion styles */
@@ -488,19 +605,19 @@
 }
 
 .members-dropdown,
-.split-dropdown {
+.paid-by-dropdown {
   position: relative;
 }
 
 .members-select,
-.split-select {
+.paid-by-select {
   font-family: 'Quicksand', sans-serif;
   font-size: 1rem;
   font-weight: 500;
   padding: 0.75rem 0.875rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  background: rgba(99, 99, 99, 0.014);
+  background: rgba(99, 99, 99, 0);
   color: #ffffff;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -516,15 +633,15 @@
 }
 
 .members-select:hover,
-.split-select:hover {
+.paid-by-select:hover {
   border-color: var(--hover-color);
-  background: rgba(255, 255, 255, 0.2);
+  /* background: rgba(255, 255, 255, 0.2); */
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .members-dropdown-content,
-.split-dropdown-content {
+.paid-by-dropdown-content {
   position: absolute;
   top: 100%;
   left: 0;
@@ -537,7 +654,7 @@
   margin-top: 0.5rem;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 1000;
+  z-index: 10000;
   display: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   opacity: 0;
@@ -545,8 +662,20 @@
   transition: all 0.3s ease;
 }
 
+/* Ensure paid-by dropdown appears above other elements */
+.paid-by-dropdown .paid-by-dropdown-content {
+  z-index: 99999;
+  position: absolute;
+}
+
+/* Ensure the paid-by dropdown container has proper stacking context */
+.paid-by-dropdown {
+  position: relative;
+  z-index: 99998;
+}
+
 .members-dropdown-content.open,
-.split-dropdown-content.open {
+.paid-by-dropdown-content.open {
   display: block;
   opacity: 1;
   transform: translateY(0);
@@ -560,7 +689,6 @@
   cursor: pointer;
   transition: all 0.3s ease;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
 }
 
 .member-checkbox-item:last-child {
@@ -589,18 +717,6 @@
   position: relative;
 }
 
-.member-checkbox:hover {
-  border-color: var(--hover-color);
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
-}
-
-.member-checkbox:checked {
-  background: var(--hover-color);
-  border-color: var(--hover-color);
-  box-shadow: 0 0 10px rgba(105, 100, 255, 0.3);
-}
-
 .member-checkbox:checked::after {
   content: '✓';
   position: absolute;
@@ -627,7 +743,7 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-.split-option {
+.paid-by-option {
   padding: 0.75rem 1rem;
   font-family: 'Quicksand', sans-serif;
   font-weight: 500;
@@ -639,10 +755,83 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.split-option:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--hover-color);
-  transform: translateX(4px);
+/* Hover effect removed for paid-by dropdown */
+
+/* Member option with radio button */
+.member-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.member-radio {
+  appearance: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  border: 2px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  position: relative !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.member-radio:checked {
+  border-color: var(--hover-color) !important;
+  background: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+
+.member-radio:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 10px !important;
+  height: 10px !important;
+  background: var(--hover-color) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 0 4px rgba(99, 102, 241, 0.8) !important;
+}
+
+.member-name {
+  font-family: 'Quicksand', sans-serif !important;
+  font-weight: 500 !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  flex: 1 !important;
+}
+
+/* Member hover effect removed for paid-by dropdown */
+
+/* Paid by button with visual separator */
+.paid-by-button {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  position: relative !important;
+}
+
+.paid-by-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-weight: 500 !important;
+}
+
+.paid-by-separator {
+  width: 1px !important;
+  height: 100% !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  flex-shrink: 0 !important;
+}
+
+.paid-by-name {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  flex: 1 !important;
+  text-align: left !important;
 }
 
 .add-expense-button {

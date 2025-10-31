@@ -164,6 +164,19 @@ const splitSchema = new mongoose.Schema({
     trim: true
   },
 
+  // Who paid for this expense initially
+  paidBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Paid by is required']
+  },
+
+  paidByName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+
   // Split status
   splitStatus: {
     type: String,

@@ -457,7 +457,9 @@ router.post('/:uuid/splits', async (req, res) => {
       splitMethod, 
       memberSplits, 
       createdBy,
-      createdByName 
+      createdByName,
+      paidBy,
+      paidByName
     } = req.body;
 
     // Debug logging
@@ -535,6 +537,8 @@ router.post('/:uuid/splits', async (req, res) => {
       memberSplits: memberSplits || [],
       createdBy: createdByUserId,
       createdByName: createdByName || 'Unknown',
+      paidBy: paidBy || createdByUserId,
+      paidByName: paidByName || createdByName || 'Unknown',
       splitStatus: 'active'
     });
 

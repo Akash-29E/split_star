@@ -18,7 +18,9 @@ router.post('/', auth, async (req, res) => {
       taxPercentage,
       splitMethod,
       memberSplits,
-      receiptImage
+      receiptImage,
+      paidBy,
+      paidByName
     } = req.body;
 
     // Validate group exists and user has access
@@ -45,6 +47,8 @@ router.post('/', auth, async (req, res) => {
       receiptImage,
       createdBy: req.user.id,
       createdByName: req.user.name,
+      paidBy: paidBy || req.user.id,
+      paidByName: paidByName || req.user.name,
       splitStatus: 'active'
     });
 
