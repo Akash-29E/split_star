@@ -27,10 +27,7 @@ function SharedGroupAccess() {
       }
 
       try {
-        console.log('Loading group info for UUID:', uuid)
-        console.log('Making request to:', `http://localhost:5000/api/groups/uuid/${uuid}`)
         const response = await getGroupByUUID(uuid)
-        console.log('Group info response:', response)
         
         if (response.success) {
           const groupData = response.data || response.group
@@ -59,22 +56,16 @@ function SharedGroupAccess() {
       const { adminPin, isGroupCreator } = location.state || {}
       
       if (adminPin && isGroupCreator && !isAuthenticated && uuid) {
-        console.log('Auto-authenticating group creator with provided PIN:', adminPin)
         try {
           const response = await verifyGroupPin(uuid, adminPin)
-          console.log('Auto-authentication response:', response)
           
           if (response.success) {
             const groupData = response.data || response.group
             setFullGroupData(groupData)
             setIsAuthenticated(true)
-            console.log('✅ Auto-authentication successful!')
-          } else {
-            console.log('❌ Auto-authentication failed, user will need to enter PIN manually')
           }
         } catch (err) {
           console.error('❌ Auto-authentication error:', err)
-          console.log('Auto-authentication failed, user will need to enter PIN manually')
         }
       }
     }
@@ -86,9 +77,7 @@ function SharedGroupAccess() {
     setPinError('')
     
     try {
-      console.log('Verifying PIN for UUID:', uuid, 'PIN:', pin)
       const response = await verifyGroupPin(uuid, pin)
-      console.log('PIN verification response:', response)
       
       if (response.success) {
         const groupData = response.data || response.group

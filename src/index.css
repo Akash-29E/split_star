@@ -20,7 +20,8 @@
 body {
   margin: 0;
   padding: 0;
-  background: linear-gradient(135deg, #023583 0%, #7533bb 50%, #8800a7 100%);
+  /* background: linear-gradient(135deg, #001b43 0%, #400084 50%, #57006a 100%); */
+  background: black;
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -32,4 +33,64 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
+}
+
+/* ===== GLASSMORPHISM UTILITY CLASSES ===== */
+/* 
+ * Only includes classes that are currently being used across components.
+ * Add new utilities here when needed, following the naming pattern:
+ * - .glass-panel (standard panels)
+ * - .glass-button (interactive elements)  
+ * - .glass-input (form elements)
+ * - Add -light/-heavy suffixes for variations
+ */
+
+/* Combined Utility Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Primary Button Hover - Reusable gradient hover effect for primary action buttons */
+.primary-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, 
+    rgba(99, 102, 241, 0.9) 0%, 
+    rgba(168, 85, 247, 0.9) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .glass-panel {
+    border-radius: 12px;
+    border-width: 1px;
+  }
 }

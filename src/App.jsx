@@ -16,25 +16,15 @@ function CreateGroupPage() {
     try {
       setError(null)
       
-      console.log('🚀 Creating group...', data)
-      
       const transformedData = groupService.transformGroupData(data)
-      console.log('📤 Sending data to backend:', transformedData)
-      
       const response = await groupService.createGroup(transformedData)
-      console.log('📥 Backend response:', response)
       
       if (response.success) {
         const backendGroupData = groupService.transformBackendData(response.data)
-        console.log('✅ Group created successfully!')
-        console.log('📋 Full group data:', backendGroupData)
         
         // Get admin PIN from the first member (admin is created first)
         const adminMember = backendGroupData.members?.find(member => member.role === 'admin')
         const adminPin = adminMember?.pin
-        
-        console.log('🔢 Admin PIN:', adminPin)
-        console.log('🆔 UUID:', backendGroupData.uuid)
         
         // Redirect to the shared group URL with admin PIN for auto-authentication
         navigate(`/group/${backendGroupData.uuid}`, { 

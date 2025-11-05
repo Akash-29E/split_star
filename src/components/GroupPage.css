@@ -19,14 +19,8 @@
   font-size: 1rem;
   font-weight: 500;
   padding: 0.75rem 1.5rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   cursor: pointer;
-  transition: all 0.3s ease;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -51,14 +45,7 @@
   font-size: 1rem;
   font-weight: 500;
   padding: 0.75rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -67,10 +54,8 @@
 }
 
 .settings-button:hover {
-  transform: translateY(-2px);
   border-color: var(--hover-color);
   color: var(--hover-color);
-  background: rgba(255, 255, 255, 0.15);
 }
 
 .members-button {
@@ -78,14 +63,7 @@
   font-size: 1rem;
   font-weight: 500;
   padding: 0.75rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -94,10 +72,8 @@
 }
 
 .members-button:hover {
-  transform: translateY(-2px);
   border-color: var(--hover-color);
   color: var(--hover-color);
-  background: rgba(255, 255, 255, 0.15);
 }
 
 .header-actions {
@@ -150,14 +126,7 @@
   font-size: 1rem;
   font-weight: 500;
   padding: 0.75rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  cursor: pointer;
-  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,10 +135,8 @@
 }
 
 .share-button:hover {
-  transform: translateY(-2px);
   border-color: var(--hover-color);
   color: var(--hover-color);
-  background: rgba(255, 255, 255, 0.15);
 }
 
 .group-content {
@@ -251,15 +218,8 @@
 
 /* Expense Form Section */
 .expense-form-section {
-  background: rgba(255, 255, 255, 0.1) !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  border: 2px solid rgba(255, 255, 255, 0.2) !important;
-  border-radius: 16px !important;
   padding: 2rem !important;
   margin-bottom: 2rem !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.3s ease !important;
   overflow: visible !important;
   position: relative !important;
   z-index: 10 !important;
@@ -272,13 +232,7 @@
 
 /* Expenses List Section */
 .expenses-list-section {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -854,13 +808,6 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.add-expense-button:hover {
-  border-color: var(--hover-color);
-  background: rgba(105, 100, 255, 0.2);
-  transform: translateY(-1px) scale(1.015);
-  box-shadow: 0 6px 20px rgba(105, 100, 255, 0.3);
-}
-
 .add-expense-button:active {
   transform: translateY(0) scale(0.98);
 }
@@ -878,16 +825,19 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
-.checkmark-icon {
+.submit-text {
   color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.1rem;
   transition: all 0.3s ease;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.add-expense-button:hover .checkmark-icon {
+.add-expense-button:hover .submit-text {
   color: var(--hover-color);
-  transform: scale(1.1);
-  filter: drop-shadow(0 2px 4px rgba(105, 100, 255, 0.4));
+  transform: scale(1.05);
+  text-shadow: 0 2px 4px rgba(105, 100, 255, 0.4);
 }
 
 .add-image-button {

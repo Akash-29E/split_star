@@ -181,14 +181,6 @@
   color: white;
 }
 
-.primary-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, 
-    rgba(99, 102, 241, 0.9) 0%, 
-    rgba(168, 85, 247, 0.9) 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
-}
-
 .primary-btn:disabled,
 .secondary-btn:disabled {
   opacity: 0.5;
