@@ -11,6 +11,19 @@
   /* background-attachment: fixed; */
 }
 
+.main-container {
+  min-height: calc(100vh - 80px);
+  width: 100%;
+}
+
+/* Responsive navbar spacing */
+@media (max-width: 768px) {
+  .main-container {
+    padding-top: 70px; /* Smaller navbar on mobile */
+    min-height: calc(100vh - 70px);
+  }
+}
+
 /* Responsive design for text fields */
 @media (max-width: 768px) {
   .text-fields-demo {

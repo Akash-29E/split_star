@@ -3,7 +3,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 10000;
   padding: 0.75rem 0;
   height: 80px;
   
@@ -33,8 +33,13 @@
   align-items: center;
   gap: 0.75rem;
   margin: 0;
-  padding: 0;
+  padding: 0.5rem;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
 }
+
+
 
 .brand-logo {
   height: 2.2rem;
@@ -50,16 +55,75 @@
 .brand-logo-svg {
   height: 100%;
   width: 100%;
-  filter: invert(99%) sepia(2%) saturate(3273%) hue-rotate(292deg) brightness(116%) contrast(101%);
+  /* Golden filter for the logo */
+  filter: invert(77%) sepia(85%) saturate(2404%) hue-rotate(350deg) brightness(100%) contrast(100%);
+  animation: logoGlow 3s ease-in-out infinite alternate;
+  transition: all 0.3s ease;
+}
+
+.brand-logo:hover .brand-logo-svg {
+  filter: invert(77%) sepia(85%) saturate(2404%) hue-rotate(350deg) brightness(150%) contrast(140%);
+  transform: scale(1.15);
+}
+
+.brand-logo:hover {
+  filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5));
 }
 
 .brand-text {
   font-family: 'Quicksand', sans-serif;
   font-size: 1.8rem;
   font-weight: 700;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  /* Golden gradient text */
+  background: linear-gradient(45deg, #FFD700, #FFA500, #FFED4E, #FFD700);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
   letter-spacing: -0.5px;
+  animation: textGlow 3s ease-in-out infinite alternate, gradientShift 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+}
+
+.brand-text:hover {
+  text-shadow: 0 0 25px rgba(255, 215, 0, 1), 0 0 40px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.6);
+  transform: scale(1.02);
+  /* Enhanced glow without changing the gradient that affects visibility */
+  filter: brightness(1.2) saturate(1.3);
+}
+
+/* Enhanced logo glow animation - more dramatic effect */
+@keyframes logoGlow {
+  0% {
+    filter: invert(77%) sepia(85%) saturate(2404%) hue-rotate(350deg) brightness(100%) contrast(100%) drop-shadow(0 0 3px rgba(255, 215, 0, 0.3));
+    transform: scale(1);
+  }
+  100% {
+    filter: invert(77%) sepia(85%) saturate(2404%) hue-rotate(350deg) brightness(130%) contrast(120%) drop-shadow(0 0 15px rgba(255, 215, 0, 0.9)) drop-shadow(0 0 25px rgba(255, 215, 0, 0.5));
+    transform: scale(1.05);
+  }
+}
+
+@keyframes textGlow {
+  0% {
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 25px rgba(255, 215, 0, 0.5), 0 0 35px rgba(255, 215, 0, 0.3);
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .navbar-menu {

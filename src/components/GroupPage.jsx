@@ -18,8 +18,9 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         accessLevel: 'full',
         pin: currentGroupData?.members?.[0]?.pin
       };
+      
 
-  // Members dropdown state
+  // Members dropdown statenp,
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   // Paid by dropdown state  
@@ -593,12 +594,13 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
       }
 
       // Split type detection removed - no longer needed
-
+      
       return newData;
     });
-  };
-
-  // Update member expense data when amount, tax, or selected members change
+  }; // End of updateMemberExpenseData function
+  
+  // Continuation of GroupPage function
+  // Update member expense data when amount, tax, or selected members change  
   useEffect(() => {
     if (selectedMembers.size > 0 && (amount || taxPercentage !== '0')) {
       // Calculate total amount including tax
@@ -627,6 +629,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   const setActiveInputType = (inputType) => {
     setGlobalActiveInputType(inputType);
   };
+
   const handleShare = async () => {
     if (!currentGroupData?.uuid) {
       alert('Group UUID not available for sharing');
@@ -643,7 +646,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
       alert('Failed to copy group link');
     }
   };
-
+  // Main component JSX return
   return (
     <>
       {/* Toast Notification - Rendered at root level */}
@@ -1060,34 +1063,24 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                                   userOwedAmount = totalAmount / split.memberSplits.length; // fallback to equal
                                 }
                                 
-                                // Check if current user created this expense
-                                const isCreatedByCurrentUser = split.createdBy === currentUser?.id || 
-                                                             split.createdBy === currentUser?.pin ||
-                                                             split.createdByName === currentUser?.name;
-                                
-                                // Calculate net amount: what user owes minus what they paid
-                                let netAmount;
+                                // Calculate net amount: what user paid minus what they owe
+                                const userPaidAmount = parseFloat(currentUserSplit.paidAmount) || 0;
+                                const netAmount = userPaidAmount - userOwedAmount;
                                 let displayText;
                                 let amountClass;
                                 
-                                if (isCreatedByCurrentUser) {
-                                  // User paid the full amount, gets back (totalAmount - userOwedAmount)
-                                  netAmount = totalAmount - userOwedAmount;
-                                  if (netAmount > 0) {
-                                    displayText = `+$${netAmount.toFixed(2)}`;
-                                    amountClass = 'user-split-amount positive';
-                                  } else if (netAmount < 0) {
-                                    displayText = `-$${Math.abs(netAmount).toFixed(2)}`;
-                                    amountClass = 'user-split-amount negative';
-                                  } else {
-                                    displayText = 'Even';
-                                    amountClass = 'user-split-amount neutral';
-                                  }
-                                } else {
-                                  // User owes the calculated amount
-                                  netAmount = userOwedAmount;
-                                  displayText = `$${netAmount.toFixed(2)}`;
+                                if (netAmount > 0) {
+                                  // User should receive money (they paid more than they owe)
+                                  displayText = `+$${netAmount.toFixed(2)}`;
+                                  amountClass = 'user-split-amount positive';
+                                } else if (netAmount < 0) {
+                                  // User owes money (they paid less than they owe)
+                                  displayText = `-$${Math.abs(netAmount).toFixed(2)}`;
                                   amountClass = 'user-split-amount negative';
+                                } else {
+                                  // User is even
+                                  displayText = 'Even';
+                                  amountClass = 'user-split-amount neutral';
                                 }
                                 
                                 return (
@@ -1372,5 +1365,4 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     </>
   )
 }
-
 export default GroupPage

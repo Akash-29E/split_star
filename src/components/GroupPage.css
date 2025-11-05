@@ -262,7 +262,7 @@
   transition: all 0.3s ease !important;
   overflow: visible !important;
   position: relative !important;
-  z-index: 1000 !important;
+  z-index: 10 !important;
 }
 
 .expense-form-section:hover {
@@ -654,7 +654,7 @@
   margin-top: 0.5rem;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 10000;
+  z-index: 20000;
   display: none;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   opacity: 0;
@@ -664,14 +664,14 @@
 
 /* Ensure paid-by dropdown appears above other elements */
 .paid-by-dropdown .paid-by-dropdown-content {
-  z-index: 99999;
+  z-index: 30000;
   position: absolute;
 }
 
 /* Ensure the paid-by dropdown container has proper stacking context */
 .paid-by-dropdown {
   position: relative;
-  z-index: 99998;
+  z-index: 25000;
 }
 
 .members-dropdown-content.open,

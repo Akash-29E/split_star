@@ -77,11 +77,13 @@ function AppContent() {
   return (
     <div className="app">
       <Navbar onHomeClick={handleNavHome} />
-      <Routes>
-        <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
-        <Route path="/create" element={<CreateGroupPage />} />
-        <Route path="/group/:uuid" element={<SharedGroupAccess />} />
-      </Routes>
+      <main className="main-container">
+        <Routes>
+          <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
+          <Route path="/create" element={<CreateGroupPage />} />
+          <Route path="/group/:uuid" element={<SharedGroupAccess />} />
+        </Routes>
+      </main>
     </div>
   )
 }

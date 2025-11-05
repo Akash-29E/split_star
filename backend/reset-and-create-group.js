@@ -4,6 +4,7 @@ import process from 'process';
 import User from './models/User.js';
 import Group from './models/Group.js';
 import Split from './models/Split.js';
+import Expense from './models/Expense.js';
 
 // Load environment variables
 dotenv.config();
@@ -28,6 +29,15 @@ const resetDatabase = async () => {
     await User.deleteMany({});
     await Group.deleteMany({});
     await Split.deleteMany({});
+    await Expense.deleteMany({});
+    
+    // Drop the expenses collection entirely since we're using splits instead
+    try {
+      await mongoose.connection.db.dropCollection('expenses');
+      console.log('✅ Expenses collection dropped');
+    } catch (error) {
+      console.log('ℹ️  Expenses collection may not exist yet:', error.message);
+    }
     
     console.log('✅ Database wiped successfully');
     
