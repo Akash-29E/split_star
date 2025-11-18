@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Split Star Database Tree Structure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #023583 0%, #7533bb 50%, #8800a7 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .tree-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 40px;
+        }
+
+        .collection {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            min-width: 280px;
+            position: relative;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .collection:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .collection.user {
+            border-color: #64b5f6;
+            background: linear-gradient(135deg, rgba(100, 181, 246, 0.2), rgba(100, 181, 246, 0.1));
+        }
+
+        .collection.group {
+            border-color: #81c784;
+            background: linear-gradient(135deg, rgba(129, 199, 132, 0.2), rgba(129, 199, 132, 0.1));
+        }
+
+        .collection.split {
+            border-color: #ffb74d;
+            background: linear-gradient(135deg, rgba(255, 183, 77, 0.2), rgba(255, 183, 77, 0.1));
+        }
+
+        .collection-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .field {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            border-left: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .field.key {
+            border-left-color: #ffd54f;
+            font-weight: 600;
+        }
+
+        .field.reference {
+            border-left-color: #4fc3f7;
+            background: rgba(79, 195, 247, 0.2);
+        }
+
+        .field.array {
+            border-left-color: #81c784;
+            background: rgba(129, 199, 132, 0.2);
+        }
+
+        .relationship-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .connection {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            transform-origin: left center;
+            pointer-events: none;
+        }
+
+        .legend {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .relationships {
+            margin-top: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .relationship {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .arrow {
+            font-size: 1.2rem;
+            color: #4fc3f7;
+        }
+
+        .rel-type {
+            background: rgba(255, 183, 77, 0.3);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .tree-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .collection {
+                min-width: 100%;
+            }
+            
+            .legend {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌳 Split Star Database Tree Structure</h1>
+        
+        <div class="tree-container">
+            <!-- User Collection -->
+            <div class="collection user">
+                <div class="collection-header">
+                    <span class="icon">👤</span>
+                    <span>User Collection</span>
+                </div>
+                <div class="field key">_id: ObjectId (PK)</div>
+                <div class="field">name: String</div>
+                <div class="field">email: String</div>
+                <div class="field">pin: String (6 digits)</div>
+                <div class="field">defaultRole: enum</div>
+                <div class="field">defaultAccessLevel: enum</div>
+                <div class="field">preferences: Object</div>
+                <div class="field array">groups[]: Array</div>
+                <div class="field reference">└─ group: ObjectId → Group</div>
+                <div class="field">└─ role: enum</div>
+                <div class="field">└─ accessLevel: enum</div>
+                <div class="field">└─ joinedAt: Date</div>
+                <div class="field">isActive: Boolean</div>
+                <div class="field">timestamps: createdAt, updatedAt</div>
+            </div>
+
+            <!-- Group Collection -->
+            <div class="collection group">
+                <div class="collection-header">
+                    <span class="icon">👥</span>
+                    <span>Group Collection</span>
+                </div>
+                <div class="field key">_id: ObjectId (PK)</div>
+                <div class="field">uuid: String (unique)</div>
+                <div class="field">groupName: String</div>
+                <div class="field">description: String</div>
+                <div class="field reference">createdBy: ObjectId → User</div>
+                <div class="field array">members[]: ObjectId[] → User</div>
+                <div class="field">personCount: Number</div>
+                <div class="field">personNames: Map</div>
+                <div class="field">settings: Object</div>
+                <div class="field array">activities[]: Array</div>
+                <div class="field">└─ type: enum</div>
+                <div class="field">└─ description: String</div>
+                <div class="field">└─ participants: String[]</div>
+                <div class="field">isActive: Boolean</div>
+                <div class="field">timestamps: createdAt, updatedAt</div>
+            </div>
+
+            <!-- Split Collection -->
+            <div class="collection split">
+                <div class="collection-header">
+                    <span class="icon">💰</span>
+                    <span>Split Collection</span>
+                </div>
+                <div class="field key">_id: ObjectId (PK)</div>
+                <div class="field">uuid: String (unique)</div>
+                <div class="field reference">groupId: ObjectId → Group</div>
+                <div class="field">splitTitle: String</div>
+                <div class="field">splitDescription: String</div>
+                <div class="field">splitType: enum</div>
+                <div class="field">baseAmount: Number</div>
+                <div class="field">taxPercentage: Number</div>
+                <div class="field">totalAmount: Number</div>
+                <div class="field">splitMethod: enum</div>
+                <div class="field">receiptImage: Object</div>
+                <div class="field reference">└─ uploadedBy: ObjectId → User</div>
+                <div class="field array">memberSplits[]: Array</div>
+                <div class="field reference">└─ memberId: ObjectId → User</div>
+                <div class="field">└─ owedAmount: Number</div>
+                <div class="field">└─ paymentStatus: enum</div>
+                <div class="field reference">createdBy: ObjectId → User</div>
+                <div class="field reference">paidBy: ObjectId → User</div>
+                <div class="field">splitStatus: enum</div>
+                <div class="field array">activities[]: Array</div>
+                <div class="field reference">└─ performedBy: ObjectId → User</div>
+                <div class="field">timestamps: createdAt, updatedAt</div>
+            </div>
+        </div>
+
+        <div class="relationships">
+            <h2 style="text-align: center; margin-bottom: 20px;">🔗 Database Relationships</h2>
+            
+            <div class="relationship">
+                <span>👤 User</span>
+                <span class="arrow">↔</span>
+                <span class="rel-type">Many-to-Many</span>
+                <span class="arrow">↔</span>
+                <span>👥 Group</span>
+            </div>
+
+            <div class="relationship">
+                <span>👥 Group</span>
+                <span class="arrow">→</span>
+                <span class="rel-type">One-to-Many</span>
+                <span class="arrow">→</span>
+                <span>💰 Split</span>
+            </div>
+
+            <div class="relationship">
+                <span>👤 User</span>
+                <span class="arrow">→</span>
+                <span class="rel-type">One-to-Many</span>
+                <span class="arrow">→</span>
+                <span>💰 Split (Creator)</span>
+            </div>
+
+            <div class="relationship">
+                <span>👤 User</span>
+                <span class="arrow">→</span>
+                <span class="rel-type">One-to-Many</span>
+                <span class="arrow">→</span>
+                <span>💰 Split (Payer)</span>
+            </div>
+
+            <div class="relationship">
+                <span>👤 User</span>
+                <span class="arrow">→</span>
+                <span class="rel-type">Many-to-Many</span>
+                <span class="arrow">→</span>
+                <span>💰 Split (Participants)</span>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #64b5f6;"></div>
+                <span>User Collection</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #81c784;"></div>
+                <span>Group Collection</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffb74d;"></div>
+                <span>Split Collection (Primary)</span>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+            <h3>📊 Key Features</h3>
+            <p style="margin-top: 10px; line-height: 1.6;">
+                • <strong>3 Main Collections</strong>: Users, Groups, and Splits<br>
+                • <strong>Complex Relationships</strong>: Many-to-many user-group associations with role-based access<br>
+                • <strong>Flexible Splitting</strong>: Equal, amount-based, percentage, and share-based expense splitting<br>
+                • <strong>Activity Tracking</strong>: Comprehensive audit trails for all financial activities<br>
+                • <strong>Optimized Indexes</strong>: Performance-tuned for group membership and split queries
+            </p>
+        </div>
+    </div>
+</body>
+</html>

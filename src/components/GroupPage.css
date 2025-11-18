@@ -148,7 +148,7 @@
 /* User Balance Summary */
 .user-balance-summary {
   margin-bottom: 2rem !important;
-  height: 80px !important;
+  min-height: 80px !important;
 }
 
 .balance-container {
@@ -160,60 +160,255 @@
   padding: 1rem 1.5rem !important;
   display: flex !important;
   align-items: center !important;
+  justify-content: space-between !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.3s ease !important;
-  height: 80px !important;
+  min-height: 80px !important;
   box-sizing: border-box !important;
   position: relative !important;
+  cursor: pointer !important;
 }
 
 .balance-container:hover {
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  border-color: var(--hover-color) !important;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
   transform: translateY(-2px) !important;
 }
 
-.balance-section {
+.balance-main {
   flex: 1 !important;
   display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
   align-items: center !important;
-  padding: 0 1rem !important;
-}
-
-.balance-divider {
-  width: 1px !important;
-  height: 100% !important;
-  background: rgba(255, 255, 255, 0.3) !important;
-  margin: 0 1rem !important;
+  justify-content: space-between !important;
+  gap: 2rem !important;
 }
 
 .balance-label {
   font-family: 'Quicksand', sans-serif !important;
-  font-size: 0.9rem !important;
-  font-weight: 600 !important;
-  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 1.1rem !important;
+  font-weight: 700 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-  margin-bottom: 0.5rem !important;
-  text-align: center !important;
 }
 
 .balance-amount {
   font-family: 'Quicksand', sans-serif !important;
-  font-size: 1.4rem !important;
+  font-size: 1.6rem !important;
   font-weight: 700 !important;
-  color: #ffffff !important;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
-  text-align: center !important;
 }
 
-.balance-to-pay .balance-amount {
+.balance-amount .balance-positive {
+  color: rgba(34, 197, 94, 0.9) !important;
+}
+
+.balance-amount .balance-negative {
   color: rgba(239, 68, 68, 0.9) !important;
 }
 
-.balance-to-receive .balance-amount {
-  color: rgba(34, 197, 94, 0.9) !important;
+.balance-amount .balance-neutral {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Accordion arrow for balance */
+.balance-container .accordion-arrow {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.balance-container .accordion-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.balance-container .accordion-arrow svg {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Balance breakdown section */
+.balance-breakdown {
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+}
+
+.balance-breakdown.collapsed {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.balance-breakdown.expanded {
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+}
+
+.member-balances-list {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.member-balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  gap: 1rem;
+}
+
+.member-balance-item:last-child {
+  border-bottom: none;
+}
+
+.member-balance-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.member-balance-info {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.member-balance-name {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.member-balance-amount {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.member-balance-amount.positive {
+  color: rgba(34, 197, 94, 0.9);
+}
+
+.member-balance-amount.negative {
+  color: rgba(239, 68, 68, 0.9);
+}
+
+/* Settlement Button */
+.settle-button {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 40px;
+  max-height: 40px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.settle-button:hover {
+  /* transform: translateY(-1px); */
+  /* box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); */
+}
+
+.settle-button:active {
+  transform: translateY(0);
+}
+
+/* Receive money (they owe you) - green theme */
+.settle-button.receive {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.15);
+  color: rgba(34, 197, 94, 1);
+}
+
+.settle-button.receive:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.25);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
+  color: rgba(34, 197, 94, 1);
+}
+
+/* Pay money (you owe them) - red theme */
+.settle-button.pay {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.15);
+  color: rgba(239, 68, 68, 1);
+}
+
+.settle-button.pay:hover {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+  color: rgba(239, 68, 68, 1);
+}
+
+.settlement-icon {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease;
+}
+
+.receive .settlement-icon{
+  filter: invert(60%) sepia(70%) saturate(459%) hue-rotate(90deg) brightness(87%) contrast(101%);
+}
+
+.pay .settlement-icon{
+  filter: invert(44%) sepia(49%) saturate(4968%) hue-rotate(338deg) brightness(100%) contrast(88%);
+}
+
+.settle-button:hover .settlement-icon {
+  transform: scale(1.1);
+}
+
+.settlement-direction {
+  font-size: 1.1rem;
+  letter-spacing: 2px;
+  font-weight: 900;
+}
+
+.no-balances-message {
+  text-align: center;
+  padding: 2rem 1rem;
+  opacity: 0.8;
+}
+
+.no-balances-message p {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Remove old balance section styles */
+.balance-section,
+.balance-divider,
+.balance-to-pay,
+.balance-to-receive {
+  display: none;
 }
 
 /* Expense Form Section */
@@ -293,6 +488,44 @@
   align-items: center !important;
 }
 
+/* Material-UI TextField Styling */
+.mui-textfield {
+  flex: 1;
+}
+
+.split-title-field {
+  flex: 1.5 !important;
+  min-width: 200px;
+}
+
+.amount-tax-container {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+
+.amount-field,
+.tax-field {
+  flex: 1 !important;
+}
+
+/* Override Material-UI input text color for better visibility */
+.mui-textfield input {
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Remove spinner arrows from number inputs */
+.mui-textfield input[type='number']::-webkit-outer-spin-button,
+.mui-textfield input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.mui-textfield input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .expense-input {
   font-family: 'Quicksand', sans-serif;
   font-size: 1rem;
@@ -339,31 +572,16 @@
   box-sizing: border-box !important;
 }
 
-/* Amount and Tax container in title row - unified field appearance */
-.amount-tax-container {
-  flex: 1 !important;
-  display: flex !important;
-  align-items: center !important;
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 2px solid rgba(255, 255, 255, 0.3) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(15px) !important;
-  -webkit-backdrop-filter: blur(15px) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.3s ease !important;
-  overflow: hidden !important;
-  position: relative !important;
-}
-
+/* 
 .amount-tax-container:hover {
   border-color: rgba(255, 255, 255, 0.4) !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
-}
+} */
 
-.amount-tax-container:focus-within {
+/* .amount-tax-container:focus-within {
   border-color: var(--hover-color) !important;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
-}
+} */
 
 .amount-section {
   flex: 3 !important;
@@ -580,7 +798,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 130px;
+  min-width: 200px;
   justify-content: space-between;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
@@ -599,7 +817,8 @@
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  min-width: 200px;
+  width: max-content;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -794,8 +1013,6 @@
   padding: 0.75rem;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   cursor: pointer;
@@ -835,7 +1052,7 @@
 }
 
 .add-expense-button:hover .submit-text {
-  color: var(--hover-color);
+  color: white;
   transform: scale(1.05);
   text-shadow: 0 2px 4px rgba(105, 100, 255, 0.4);
 }

@@ -1,61 +1,48 @@
 import express from 'express';
 import Split from '../models/Split.js';
 import Group from '../models/Group.js';
-import User from '../models/User.js';
 import { auth } from '../middleware/auth.js';
+import { validateJoi, splitSchema, paginationSchema, validateQuery } from '../validation/schemas.js';
 
 const router = express.Router();
 
 // Create a new split
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, validateJoi(splitSchema), async (req, res) => {
   try {
-    const {
-      groupId,
-      splitTitle,
-      splitDescription,
-      splitType,
-      baseAmount,
-      taxPercentage,
-      splitMethod,
-      memberSplits,
-      receiptImage,
-      paidBy,
-      paidByName
-    } = req.body;
+    const { groupId } = req.body;
 
     // Validate group exists and user has access
     const group = await Group.findById(groupId);
     if (!group) {
-      return res.status(404).json({ error: 'Group not found' });
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Group not found' 
+      });
     }
 
     // Check if user is a member of the group
     if (!group.members.includes(req.user.id)) {
-      return res.status(403).json({ error: 'Access denied. You are not a member of this group.' });
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Access denied. You are not a member of this group.' 
+      });
     }
 
-    // Create the split
+    // Create the split with validated data
     const split = new Split({
-      groupId,
-      splitTitle,
-      splitDescription,
-      splitType: splitType || 'split',
-      baseAmount,
-      taxPercentage: taxPercentage || 0,
-      splitMethod: splitMethod || 'equal',
-      memberSplits: memberSplits || [],
-      receiptImage,
+      ...req.body,
       createdBy: req.user.id,
       createdByName: req.user.name,
-      paidBy: paidBy || req.user.id,
-      paidByName: paidByName || req.user.name,
+      // Set paidBy to current user if not specified
+      paidBy: req.body.paidBy || req.user.id,
+      paidByName: req.body.paidByName || req.user.name,
       splitStatus: 'active'
     });
 
     // Add creation activity
     split.activities.push({
       activityType: 'created',
-      description: `Split "${splitTitle}" created`,
+      description: `Split "${req.body.splitTitle}" created`,
       performedBy: req.user.id,
       performedByName: req.user.name
     });
@@ -64,12 +51,14 @@ router.post('/', auth, async (req, res) => {
     await split.populateReferences();
 
     res.status(201).json({
+      success: true,
       message: 'Split created successfully',
-      split
+      data: split
     });
   } catch (error) {
     console.error('Create split error:', error);
-    res.status(400).json({ 
+    res.status(500).json({ 
+      success: false,
       error: 'Failed to create split', 
       details: error.message 
     });
@@ -77,41 +66,45 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Get all splits for a group
-router.get('/group/:groupId', auth, async (req, res) => {
+router.get('/group/:groupId', auth, validateQuery(paginationSchema), async (req, res) => {
   try {
     const { groupId } = req.params;
-    const { status, page = 1, limit = 10 } = req.query;
+    const { page, limit, sort, status } = req.query;
 
     // Validate group exists and user has access
     const group = await Group.findById(groupId);
     if (!group) {
-      return res.status(404).json({ error: 'Group not found' });
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Group not found' 
+      });
     }
 
     if (!group.members.includes(req.user.id)) {
-      return res.status(403).json({ error: 'Access denied. You are not a member of this group.' });
+      return res.status(403).json({ 
+        success: false, 
+        error: 'Access denied. You are not a member of this group.' 
+      });
     }
 
-    const options = {};
-    if (status) {
-      options.status = status;
-    }
-
-    const splits = await Split.findByGroup(groupId, options)
+    const queryOptions = status ? { splitStatus: status } : {};
+    
+    const splits = await Split.findByGroup(groupId, queryOptions)
+      .sort(sort) // Use the sort parameter
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
     const totalSplits = await Split.countDocuments({
       groupId,
       isActive: true,
-      ...(status && { splitStatus: status })
+      ...queryOptions
     });
 
     res.json({
       splits,
       totalSplits,
       totalPages: Math.ceil(totalSplits / limit),
-      currentPage: page
+      currentPage: parseInt(page)
     });
   } catch (error) {
     console.error('Get group splits error:', error);
@@ -123,7 +116,7 @@ router.get('/group/:groupId', auth, async (req, res) => {
 });
 
 // Get splits for a specific member
-router.get('/member/:memberId', auth, async (req, res) => {
+router.get('/member/:memberId', auth, validateQuery(paginationSchema), async (req, res) => {
   try {
     const { memberId } = req.params;
     const { status, page = 1, limit = 10 } = req.query;
@@ -133,12 +126,9 @@ router.get('/member/:memberId', auth, async (req, res) => {
       return res.status(403).json({ error: 'Access denied. You can only view your own splits.' });
     }
 
-    const options = {};
-    if (status) {
-      options.status = status;
-    }
+    const queryOptions = status ? { splitStatus: status } : {};
 
-    const splits = await Split.findByMember(memberId, options)
+    const splits = await Split.findByMember(memberId, queryOptions)
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
@@ -146,14 +136,14 @@ router.get('/member/:memberId', auth, async (req, res) => {
       'memberSplits.memberId': memberId,
       'memberSplits.isParticipating': true,
       isActive: true,
-      ...(status && { splitStatus: status })
+      ...queryOptions
     });
 
     res.json({
       splits,
       totalSplits,
       totalPages: Math.ceil(totalSplits / limit),
-      currentPage: page
+      currentPage: parseInt(page)
     });
   } catch (error) {
     console.error('Get member splits error:', error);
@@ -170,7 +160,7 @@ router.get('/:splitId', auth, async (req, res) => {
     const { splitId } = req.params;
 
     const split = await Split.findById(splitId);
-    if (!split) {
+    if (!split || !split.isActive) {
       return res.status(404).json({ error: 'Split not found' });
     }
 
@@ -198,7 +188,7 @@ router.put('/:splitId', auth, async (req, res) => {
     const updates = req.body;
 
     const split = await Split.findById(splitId);
-    if (!split) {
+    if (!split || !split.isActive) {
       return res.status(404).json({ error: 'Split not found' });
     }
 
@@ -256,7 +246,7 @@ router.post('/:splitId/payment', auth, async (req, res) => {
     const { amount, memberId } = req.body;
 
     const split = await Split.findById(splitId);
-    if (!split) {
+    if (!split || !split.isActive) {
       return res.status(404).json({ error: 'Split not found' });
     }
 
@@ -336,7 +326,7 @@ router.delete('/:splitId', auth, async (req, res) => {
     const { splitId } = req.params;
 
     const split = await Split.findById(splitId);
-    if (!split) {
+    if (!split || !split.isActive) {
       return res.status(404).json({ error: 'Split not found' });
     }
 

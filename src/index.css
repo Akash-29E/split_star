@@ -21,7 +21,7 @@ body {
   margin: 0;
   padding: 0;
   /* background: linear-gradient(135deg, #001b43 0%, #400084 50%, #57006a 100%); */
-  background: black;
+  background: rgb(0, 35, 118);
   background-attachment: fixed;
   min-height: 100vh;
 }

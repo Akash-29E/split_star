@@ -8,7 +8,6 @@ import process from 'process';
 
 // Import routes
 import groupRoutes from './routes/groups.js';
-import userRoutes from './routes/users.js';
 import authRoutes from './routes/auth.js';
 import splitRoutes from './routes/splits.js';
 
@@ -44,7 +43,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/splits', splitRoutes);
 
 // Health check endpoint

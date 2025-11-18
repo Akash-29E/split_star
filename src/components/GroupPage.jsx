@@ -1,8 +1,10 @@
 import './GroupPage.css'
 import { groupService } from '../services/groups'
 import Toast from './Toast'
+import Popup from './Popup'
 import useToast from '../hooks/useToast'
 import { useState, useEffect, useRef } from 'react'
+import { TextField } from '@mui/material'
 
 function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isSharedAccess, authenticatedMember }) {
   // Use initialGroupData if provided (for shared access), otherwise use groupData
@@ -46,6 +48,29 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   const [splits, setSplits] = useState([]);
   const [isAddingSplit, setIsAddingSplit] = useState(false);
   const [expandedSplits, setExpandedSplits] = useState(new Set());
+  
+  // Balance accordion state
+  const [isBalanceExpanded, setIsBalanceExpanded] = useState(false);
+  
+  // Settlement popup state
+  const [settlementPopup, setSettlementPopup] = useState({
+    isOpen: false,
+    payer: '',
+    payee: '',
+    amount: ''
+  });
+  
+  // Popup state
+  const [popupConfig, setPopupConfig] = useState({
+    isOpen: false,
+    type: 'confirm',
+    title: '',
+    message: '',
+    onConfirm: null,
+    primaryButtonText: 'OK',
+    secondaryButtonText: 'Cancel',
+    showSecondaryButton: true
+  });
   
   // Toast notification using custom hook
   const { toast, showSuccess, showError, hideToast } = useToast();
@@ -137,14 +162,37 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   const calculateUserBalance = () => {
     let totalToPay = 0;
     let totalToReceive = 0;
-
-
+    let netBalance = 0; // Sum of all individual amounts
 
     splits.forEach(split => {
       const totalAmount = parseFloat(split.totalAmount) || parseFloat(split.baseAmount) || 0;
       
+      // Check if current user paid for this expense
+      const currentUserPaid = split.paidBy === currentUser?.id || 
+                             split.paidBy === currentUser?.pin ||
+                             split.paidByName === currentUser?.name;
+      
+      // Special handling for settlement records
+      if (split.splitTitle === 'Settlement Record') {
+        const currentUserIsPayee = split.memberSplits.some(ms => 
+          ms.memberId === currentUser._id ||
+          ms.memberId === currentUser.id ||
+          ms.memberId === currentUser.pin ||
+          ms.memberName === currentUser.name ||
+          ms.memberId === currentUser.name
+        );
+        
+        if (currentUserPaid) {
+          // Current user is payer (lender) - add positive amount
+          netBalance += totalAmount;
+        } else if (currentUserIsPayee) {
+          // Current user is payee (borrower) - add negative amount
+          netBalance -= totalAmount;
+        }
+        return; // Skip normal processing for settlements
+      }
+      
       // Find current user's split by matching different possible identifiers
-
       const currentUserSplit = split.memberSplits.find(ms => {
         return ms.memberId === currentUser._id ||
                ms.memberId === currentUser.id ||
@@ -179,24 +227,237 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           userOwedAmount = totalAmount / split.memberSplits.length;
       }
 
-      // Calculate what the user paid for this expense
-      const userPaidAmount = parseFloat(currentUserSplit.paidAmount) || 0;
-      
-      // Simple logic: each expense contributes to either "owe" or "receive"
-      const expenseNetAmount = userPaidAmount - userOwedAmount;
-
-
-
-      // If the net amount for this expense is positive, user should receive money
-      // If negative, user owes money for this expense
-      if (expenseNetAmount > 0) {
-        totalToReceive += expenseNetAmount;
-      } else if (expenseNetAmount < 0) {
-        totalToPay += Math.abs(expenseNetAmount);
+      if (currentUserPaid) {
+        // Current user paid - they should receive money from others
+        const amountToReceive = totalAmount - userOwedAmount;
+        if (amountToReceive > 0) {
+          netBalance += amountToReceive;
+        }
+      } else {
+        // Someone else paid - current user needs to pay back
+        if (userOwedAmount > 0) {
+          netBalance -= userOwedAmount;
+        }
       }
     });
 
+    // Calculate totalToPay and totalToReceive from netBalance
+    if (netBalance > 0) {
+      totalToReceive = netBalance;
+      totalToPay = 0;
+    } else {
+      totalToPay = Math.abs(netBalance);
+      totalToReceive = 0;
+    }
+
     return { totalToPay, totalToReceive };
+  };
+
+  // Calculate balance breakdown by member
+  const calculateMemberBalances = () => {
+    const memberBalances = new Map();
+
+    splits.forEach((split) => {
+      const totalAmount = parseFloat(split.totalAmount) || parseFloat(split.baseAmount) || 0;
+      
+      // Find current user's split
+      const currentUserSplit = split.memberSplits.find(ms => {
+        return ms.memberId === currentUser._id ||
+               ms.memberId === currentUser.id ||
+               ms.memberId === currentUser.pin ||
+               ms.memberName === currentUser.name ||
+               ms.memberId === currentUser.name;
+      });
+      
+      // Check if current user paid
+      const currentUserPaid = split.paidBy === currentUser?.id || 
+                             split.paidBy === currentUser?.pin ||
+                             split.paidByName === currentUser?.name;
+      
+      // Skip if current user neither paid nor owes
+      if (!currentUserSplit && !currentUserPaid) return;
+
+      // Calculate user's owed amount (only if current user is in the split)
+      let userOwedAmount = 0;
+      const totalShares = split.memberSplits.reduce((sum, ms) => sum + (ms.splitValue?.shares || 1), 0);
+      
+      if (currentUserSplit) {
+        switch (split.splitMethod) {
+          case 'equal':
+            userOwedAmount = totalAmount / split.memberSplits.length;
+            break;
+          case 'exact':
+          case 'amount':
+            userOwedAmount = parseFloat(currentUserSplit.splitValue?.amount) || 0;
+            break;
+          case 'percentage':
+            userOwedAmount = (totalAmount * (parseFloat(currentUserSplit.splitValue?.percentage) || 0)) / 100;
+            break;
+          case 'shares':
+            userOwedAmount = totalShares > 0 ? (totalAmount * (parseInt(currentUserSplit.splitValue?.shares) || 1)) / totalShares : 0;
+            break;
+          default:
+            userOwedAmount = totalAmount / split.memberSplits.length;
+        }
+      }
+
+      // Special handling for settlement records
+      if (split.splitTitle === 'Settlement Record') {
+        if (currentUserPaid) {
+          // Current user is payer - paying settlement to someone (payee in memberSplits)
+          // This means current user is reducing their debt to the payee
+          const payeeName = split.memberSplits[0]?.memberName;
+          if (payeeName && payeeName !== currentUser.name) {
+            if (!memberBalances.has(payeeName)) {
+              memberBalances.set(payeeName, 0);
+            }
+            // Current user paying reduces the amount payee is owed (or increases what current user owes if backwards)
+            // Since balance is from current user's perspective: positive = they owe you, negative = you owe them
+            // Paying them means adding to their balance (moving towards positive)
+            memberBalances.set(payeeName, memberBalances.get(payeeName) + totalAmount);
+          }
+        } else if (currentUserSplit) {
+          // Someone paid a settlement TO current user (current user is payee)
+          // The payer is settling their debt to current user
+          const payerName = split.paidByName;
+          if (payerName && payerName !== currentUser.name) {
+            if (!memberBalances.has(payerName)) {
+              memberBalances.set(payerName, 0);
+            }
+            // Reduce what payer owes to current user
+            memberBalances.set(payerName, memberBalances.get(payerName) - totalAmount);
+          }
+        }
+        return; // Skip the normal memberSplits processing for settlements
+      }
+
+      // Process each member's balance with current user
+      split.memberSplits.forEach(memberSplit => {
+        const memberName = memberSplit.memberName;
+        
+        // Skip current user
+        if (memberName === currentUser.name) return;
+
+        // Calculate this member's owed amount
+        let memberOwedAmount = 0;
+        switch (split.splitMethod) {
+          case 'equal':
+            memberOwedAmount = totalAmount / split.memberSplits.length;
+            break;
+          case 'exact':
+          case 'amount':
+            memberOwedAmount = parseFloat(memberSplit.splitValue?.amount) || 0;
+            break;
+          case 'percentage':
+            memberOwedAmount = (totalAmount * (parseFloat(memberSplit.splitValue?.percentage) || 0)) / 100;
+            break;
+          case 'shares':
+            memberOwedAmount = totalShares > 0 ? (totalAmount * (parseInt(memberSplit.splitValue?.shares) || 1)) / totalShares : 0;
+            break;
+          default:
+            memberOwedAmount = totalAmount / split.memberSplits.length;
+        }
+
+        const memberPaid = split.paidBy === memberSplit.memberId || split.paidByName === memberName;
+
+        if (!memberBalances.has(memberName)) {
+          memberBalances.set(memberName, 0);
+        }
+
+        if (currentUserPaid && !memberPaid) {
+          // Current user paid, this member owes current user
+          memberBalances.set(memberName, memberBalances.get(memberName) + memberOwedAmount);
+        } else if (memberPaid && !currentUserPaid) {
+          // This member paid, current user owes this member
+          memberBalances.set(memberName, memberBalances.get(memberName) - userOwedAmount);
+        }
+      });
+    });
+
+    const balances = Array.from(memberBalances.entries())
+      .map(([name, amount]) => ({ name, amount }))
+      .filter(member => Math.abs(member.amount) > 0.01)
+      .sort((a, b) => b.amount - a.amount); // Sort by amount (receivable first)
+    
+    return balances;
+  };
+
+  const handleSettleClick = (memberName, amount) => {
+    const payer = amount > 0 ? memberName : currentUser.name;
+    const payee = amount > 0 ? currentUser.name : memberName;
+    
+    setSettlementPopup({
+      isOpen: true,
+      payer: payer,
+      payee: payee,
+      amount: Math.abs(amount).toFixed(2)
+    });
+  };
+
+  const handleSettleConfirm = async () => {
+    const settlementAmount = parseFloat(settlementPopup.amount);
+    
+    if (!settlementAmount || settlementAmount <= 0) {
+      showError('Please enter a valid amount');
+      return;
+    }
+
+    try {
+      // Find the payer and payee member objects
+      const payerMember = currentGroupData?.members?.find(m => m.name === settlementPopup.payer);
+      const payeeMember = currentGroupData?.members?.find(m => m.name === settlementPopup.payee);
+
+      if (!payerMember || !payeeMember) {
+        showError('Could not find member information');
+        return;
+      }
+
+      // Create settlement split data
+      const settlementData = {
+        splitTitle: 'Settlement Record',
+        splitDescription: `Settlement: ${settlementPopup.payer} → ${settlementPopup.payee}`,
+        baseAmount: settlementAmount,
+        taxPercentage: 0,
+        splitMethod: 'amount',
+        createdBy: payerMember._id || payerMember.id || payerMember.pin,
+        memberSplits: [
+          {
+            memberId: payeeMember._id || payeeMember.id || payeeMember.pin,
+            memberName: payeeMember.name,
+            splitValue: {
+              amount: settlementAmount,
+              percentage: 100,
+              shares: 1
+            }
+          }
+        ],
+        paidBy: payerMember._id || payerMember.id || payerMember.pin,
+        paidByName: payerMember.name
+      };
+
+      // Add the settlement split to the backend
+      const response = await groupService.createSplit(currentGroupData.uuid, settlementData);
+
+      if (response.success) {
+        // Reload splits to show the new settlement
+        const splitsResponse = await groupService.getSplits(currentGroupData.uuid);
+        if (splitsResponse.success) {
+          setSplits(splitsResponse.data || []);
+        }
+        
+        showSuccess('Settlement recorded successfully!');
+        setSettlementPopup({ isOpen: false, payer: '', payee: '', amount: '' });
+      } else {
+        showError(response.error || 'Failed to record settlement');
+      }
+    } catch (error) {
+      console.error('Error recording settlement:', error);
+      showError('Failed to record settlement. Please try again.');
+    }
+  };
+
+  const handleSettleCancel = () => {
+    setSettlementPopup({ isOpen: false, payer: '', payee: '', amount: '' });
   };
 
   const handleAddExpense = async () => {
@@ -205,8 +466,8 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
       return;
     }
     
-    if (!amount || selectedMembers.size < 2) {
-      alert('Please enter an amount and select at least 2 members');
+    if (!amount || selectedMembers.size < 1) {
+      alert('Please enter an amount and select at least 1 member');
       return;
     }
 
@@ -345,10 +606,26 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     showSuccess('Add image functionality coming soon!');
   };
 
+  // Popup helper functions
+  const openPopup = (config) => {
+    setPopupConfig({
+      isOpen: true,
+      type: config.type || 'confirm',
+      title: config.title || 'Confirmation',
+      message: config.message || '',
+      onConfirm: config.onConfirm || null,
+      primaryButtonText: config.primaryButtonText || 'OK',
+      secondaryButtonText: config.secondaryButtonText || 'Cancel',
+      showSecondaryButton: config.showSecondaryButton !== undefined ? config.showSecondaryButton : true
+    });
+  };
+
+  const closePopup = () => {
+    setPopupConfig(prev => ({ ...prev, isOpen: false }));
+  };
+
   const handleDeleteExpense = async (splitId) => {
     try {
-
-      
       // Show loading state (optional - could add a loading spinner)
       const response = await groupService.deleteSplit(
         currentGroupData.uuid,
@@ -370,6 +647,18 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
       console.error('❌ Delete expense failed:', error);
       showError(error.message || 'Failed to delete expense. Please try again.');
     }
+  };
+
+  const confirmDeleteExpense = (splitId) => {
+    openPopup({
+      type: 'error',
+      title: 'Delete Expense',
+      message: 'Are you sure you want to delete this expense? This action cannot be undone.',
+      primaryButtonText: 'Delete',
+      secondaryButtonText: 'Cancel',
+      showSecondaryButton: true,
+      onConfirm: () => handleDeleteExpense(splitId)
+    });
   };
 
   const handleMemberSelection = (memberId, isSelected) => {
@@ -590,6 +879,19 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         onClose={hideToast}
       />
 
+      {/* Popup Component - Rendered at root level */}
+      <Popup
+        isOpen={popupConfig.isOpen}
+        onClose={closePopup}
+        title={popupConfig.title}
+        message={popupConfig.message}
+        type={popupConfig.type}
+        primaryButtonText={popupConfig.primaryButtonText}
+        secondaryButtonText={popupConfig.secondaryButtonText}
+        onPrimaryClick={popupConfig.onConfirm}
+        showSecondaryButton={popupConfig.showSecondaryButton}
+      />
+
       <div className="main-content">
         <div className="group-page-container">
         <div className="group-header">
@@ -630,16 +932,74 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         <div className="group-content">
           {/* User Balance Summary */}
           <div className="user-balance-summary">
-            <div className="balance-container">
-              <div className="balance-section balance-to-pay">
-                <div className="balance-label">You Owe</div>
-                <div className="balance-amount">${calculateUserBalance().totalToPay.toFixed(2)}</div>
+            <div 
+              className="balance-container clickable-item" 
+              onClick={() => setIsBalanceExpanded(!isBalanceExpanded)}
+            >
+              <div className="balance-main">
+                <div className="balance-label">Your Balance</div>
+                <div className="balance-amount">
+                  {(() => {
+                    const { totalToPay, totalToReceive } = calculateUserBalance();
+                    const netBalance = totalToReceive - totalToPay;
+                    if (Math.abs(netBalance) < 0.01) {
+                      return <span className="balance-neutral">$0.00</span>;
+                    } else if (netBalance > 0) {
+                      return <span className="balance-positive">+${netBalance.toFixed(2)}</span>;
+                    } else {
+                      return <span className="balance-negative">-${Math.abs(netBalance).toFixed(2)}</span>;
+                    }
+                  })()}
+                </div>
               </div>
-              <div className="balance-divider"></div>
-              <div className="balance-section balance-to-receive">
-                <div className="balance-label">You'll Receive</div>
-                <div className="balance-amount">${calculateUserBalance().totalToReceive.toFixed(2)}</div>
+              <div className={`accordion-arrow ${isBalanceExpanded ? 'expanded' : ''}`}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
               </div>
+            </div>
+            
+            {/* Member balances breakdown */}
+            <div className={`balance-breakdown ${isBalanceExpanded ? 'expanded' : 'collapsed'}`}>
+              {(() => {
+                const memberBalances = calculateMemberBalances();
+                return memberBalances.length > 0 ? (
+                  <div className="member-balances-list">
+                    {memberBalances.map((member, index) => (
+                      <div key={index} className="member-balance-item">
+                      <div className="member-balance-info">
+                        <div className="member-balance-name">{member.name}</div>
+                        <div className={`member-balance-amount ${member.amount > 0 ? 'positive' : 'negative'}`}>
+                          {member.amount > 0 ? (
+                            <span>owes you ${member.amount.toFixed(2)}</span>
+                          ) : (
+                            <span>you owe ${Math.abs(member.amount).toFixed(2)}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button 
+                        className={`settle-button ${member.amount > 0 ? 'receive' : 'pay'}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSettleClick(member.name, member.amount);
+                        }}
+                        title={member.amount > 0 ? `Receive $${member.amount.toFixed(2)} from ${member.name}` : `Pay $${Math.abs(member.amount).toFixed(2)} to ${member.name}`}
+                      >
+                        {member.amount > 0 ? (
+                          <img src="/settle_icon.svg" alt="Receive" className="settlement-icon" />
+                        ) : (
+                          <img src="/settle_icon.svg" alt="Send" className="settlement-icon" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-balances-message">
+                  <p>All settled up! 🎉</p>
+                </div>
+              );
+              })()}
             </div>
           </div>
 
@@ -649,39 +1009,179 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
             <div className="expense-controls">
               {/* Split Title and Amount Row - 50% each */}
               <div className="split-title-row">
-                <input 
-                  type="text" 
-                  className="expense-input split-title-input" 
-                  placeholder="Split title (e.g., Dinner, Groceries, Rent)"
+                <TextField
+                  label="For"
+                  variant="outlined"
+                  placeholder="Dinner, Groceries, Rent"
                   value={splitTitle}
                   onChange={(e) => setSplitTitle(e.target.value)}
+                  className="mui-textfield split-title-field"
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      color: '#ffffff',
+                      fontFamily: 'Quicksand, sans-serif',
+                      fontSize: '1rem',
+                      fontWeight: 500,
+                      borderRadius: '12px',
+                      '& fieldset': {
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
+                        borderWidth: '2px',
+                        borderRadius: '12px',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'var(--hover-color)',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'var(--hover-color)',
+                        borderWidth: '2px',
+                      },
+                      backgroundColor: 'transparent',
+                      backdropFilter: 'blur(15px)',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                      transition: 'all 0.3s ease',
+                    },
+                    '& .MuiOutlinedInput-root:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+                    },
+                    '& .MuiInputLabel-root': {
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      fontFamily: 'Quicksand, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: 'var(--hover-color)',
+                    },
+                    '& .MuiInputBase-input::placeholder': {
+                      // color: 'rgba(255, 255, 255, 0.5)',
+                      // opacity: 1,
+                    },
+                  }}
                 />
                 <div className="amount-tax-container">
-                  <div className="input-with-prefix amount-section">
-                    <span className="input-prefix">$</span>
-                    <input 
-                      type="number" 
-                      className="expense-input amount-input" 
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                    />
-                  </div>
-                  <div className="input-with-suffix tax-section">
-                    <input 
-                      type="number" 
-                      className="expense-input tax-input" 
-                      placeholder="0"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                      value={taxPercentage}
-                      onChange={(e) => setTaxPercentage(e.target.value)}
-                    />
-                    <span className="input-suffix">%</span>
-                  </div>
+                  <TextField
+                    label="Spent"
+                    variant="outlined"
+                    type="number"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="mui-textfield amount-field"
+                    fullWidth
+                    InputProps={{
+                      startAdornment: <span style={{ color: 'rgba(255, 255, 255, 0.8)', marginRight: '6px', fontWeight: 600 }}>$</span>,
+                    }}
+                    inputProps={{
+                      step: '0.01',
+                      min: '0',
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        fontFamily: 'Quicksand, sans-serif',
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        borderRadius: '12px',
+                        '& fieldset': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                          borderWidth: '2px',
+                          borderRadius: '12px',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'var(--hover-color)',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'var(--hover-color)',
+                          borderWidth: '2px',
+                        },
+                        backgroundColor: 'transparent',
+                        backdropFilter: 'blur(15px)',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.3s ease',
+                      },
+                      '& .MuiOutlinedInput-root:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontFamily: 'Quicksand, sans-serif',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        backgroundColor: 'transparent',
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'var(--hover-color)',
+                      },
+                      '& .MuiInputBase-input::placeholder': {
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        opacity: 1,
+                      },
+                    }}
+                  />
+                  <TextField
+                    label="+ Tax"
+                    variant="outlined"
+                    type="number"
+                    placeholder="0"
+                    value={taxPercentage}
+                    onChange={(e) => setTaxPercentage(e.target.value)}
+                    className="mui-textfield tax-field"
+                    fullWidth
+                    InputProps={{
+                      endAdornment: <span style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '6px', fontWeight: 600 }}>%</span>,
+                    }}
+                    inputProps={{
+                      step: '0.01',
+                      min: '0',
+                      max: '100',
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        color: '#ffffff',
+                        fontFamily: 'Quicksand, sans-serif',
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        borderRadius: '12px',
+                        '& fieldset': {
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+                          borderWidth: '2px',
+                          borderRadius: '12px',
+                        },
+                        '&:hover fieldset': {
+                          borderColor: 'var(--hover-color)',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: 'var(--hover-color)',
+                          borderWidth: '2px',
+                        },
+                        backgroundColor: 'transparent',
+                        backdropFilter: 'blur(15px)',
+                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.3s ease',
+                      },
+                      '& .MuiOutlinedInput-root:hover': {
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        fontFamily: 'Quicksand, sans-serif',
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        backgroundColor: 'transparent',
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'var(--hover-color)',
+                      },
+                      '& .MuiInputBase-input::placeholder': {
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        opacity: 1,
+                      },
+                    }}
+                  />
                 </div>
               </div>
 
@@ -824,7 +1324,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
               </div>
               </div>
 
-              {/* Add Expense Button */}
+              {/* Add Split Button */}
               <div className="form-group">
                 <button 
                   className="add-expense-button primary-btn" 
@@ -842,10 +1342,10 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
               </div>
             </div>
 
-            {/* Member Expense Details */}
+            {/* Member Split Details */}
             {selectedMembers.size > 0 && (
               <div className="member-expense-section">
-                <h3 className="section-title">Member Expense Details</h3>
+                <h3 className="section-title">Member Split Details</h3>
                 <div className="member-expense-list">
                   {Array.from(selectedMembers).map(memberId => {
                     const member = currentGroupData?.members?.find(m => (m._id || currentGroupData.members.indexOf(m)) === memberId);
@@ -956,6 +1456,32 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                           </div>
                           <div className="expense-status">
                             {(() => {
+                              // Check if current user paid for this expense
+                              const currentUserPaid = split.paidBy === currentUser?.id || 
+                                                     split.paidBy === currentUser?.pin ||
+                                                     split.paidByName === currentUser?.name;
+                              
+                              // Special handling for settlement records
+                              if (split.splitTitle === 'Settlement Record') {
+                                const totalAmount = split.totalAmount || 0;
+                                
+                                if (currentUserPaid) {
+                                  // Current user is payer - lending money
+                                  return (
+                                    <span className="user-split-amount positive">
+                                      +${totalAmount.toFixed(2)}
+                                    </span>
+                                  );
+                                } else {
+                                  // Current user is payee - borrowing money
+                                  return (
+                                    <span className="user-split-amount negative">
+                                      -${totalAmount.toFixed(2)}
+                                    </span>
+                                  );
+                                }
+                              }
+                              
                               // Find current user's split in this expense
                               const currentUserSplit = split.memberSplits?.find(memberSplit => 
                                 memberSplit.memberId === currentUser?.id || 
@@ -981,24 +1507,30 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                                   userOwedAmount = totalAmount / split.memberSplits.length; // fallback to equal
                                 }
                                 
-                                // Calculate net amount: what user paid minus what they owe
-                                const userPaidAmount = parseFloat(currentUserSplit.paidAmount) || 0;
-                                const netAmount = userPaidAmount - userOwedAmount;
                                 let displayText;
                                 let amountClass;
                                 
-                                if (netAmount > 0) {
-                                  // User should receive money (they paid more than they owe)
-                                  displayText = `+$${netAmount.toFixed(2)}`;
-                                  amountClass = 'user-split-amount positive';
-                                } else if (netAmount < 0) {
-                                  // User owes money (they paid less than they owe)
-                                  displayText = `-$${Math.abs(netAmount).toFixed(2)}`;
-                                  amountClass = 'user-split-amount negative';
+                                if (currentUserPaid) {
+                                  // Current user paid - they should receive money from others
+                                  // Calculate how much others owe to current user
+                                  const amountToReceive = totalAmount - userOwedAmount;
+                                  
+                                  if (amountToReceive > 0) {
+                                    displayText = `+$${amountToReceive.toFixed(2)}`;
+                                    amountClass = 'user-split-amount positive';
+                                  } else {
+                                    displayText = 'Even';
+                                    amountClass = 'user-split-amount neutral';
+                                  }
                                 } else {
-                                  // User is even
-                                  displayText = 'Even';
-                                  amountClass = 'user-split-amount neutral';
+                                  // Someone else paid - current user needs to pay back
+                                  if (userOwedAmount > 0) {
+                                    displayText = `-$${userOwedAmount.toFixed(2)}`;
+                                    amountClass = 'user-split-amount negative';
+                                  } else {
+                                    displayText = 'Even';
+                                    amountClass = 'user-split-amount neutral';
+                                  }
                                 }
                                 
                                 return (
@@ -1083,9 +1615,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                                       className="action-btn delete-btn"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        if (window.confirm('Are you sure you want to delete this expense?')) {
-                                          handleDeleteExpense(split._id);
-                                        }
+                                        confirmDeleteExpense(split._id);
                                       }}
                                       title="Delete expense"
                                     >
@@ -1265,6 +1795,57 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           </div>
         </div>
       </div>
+
+      {/* Settlement Popup */}
+      {settlementPopup.isOpen && (
+        <Popup
+          isOpen={settlementPopup.isOpen}
+          onClose={handleSettleCancel}
+          title="Settle"
+          subtitle={`${settlementPopup.payer} → ${settlementPopup.payee}`}
+          type="confirm"
+          primaryButtonText="Settle"
+          secondaryButtonText="Cancel"
+          onPrimaryClick={handleSettleConfirm}
+          onSecondaryClick={handleSettleCancel}
+          showSecondaryButton={true}
+        >
+          <div style={{ padding: '20px 0' }}>
+            <TextField
+              label="Amount"
+              type="number"
+              value={settlementPopup.amount}
+              onChange={(e) => setSettlementPopup({ ...settlementPopup, amount: e.target.value })}
+              fullWidth
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'var(--hover-color)',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: 'var(--hover-color)',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontFamily: "'Quicksand', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                  '&.Mui-focused': {
+                    color: 'var(--hover-color)',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  color: 'white',
+                  fontFamily: "'Quicksand', system-ui, Avenir, Helvetica, Arial, sans-serif",
+                },
+              }}
+            />
+          </div>
+        </Popup>
+      )}
     </div>
     </>
   )
