@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   width="800px"
+   height="800px"
+   viewBox="0 0 24 24"
+   fill="none"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="star-svgrepo-com.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="linearGradient1"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop1" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop2" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient1"
+       id="radialGradient2"
+       cx="12.000007"
+       cy="12.032247"
+       fx="12.000007"
+       fy="12.032247"
+       r="11.807934"
+       gradientTransform="matrix(1,0,0,0.96594794,0,0.40972272)"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="1.9357048"
+     inkscape:cx="419.48545"
+     inkscape:cy="377.89853"
+     inkscape:window-width="2560"
+     inkscape:window-height="1334"
+     inkscape:window-x="2869"
+     inkscape:window-y="477"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     fill-rule="evenodd"
+     clip-rule="evenodd"
+     d="M10.1507 2.3649C10.8306.7136 13.1694.7136 13.8494 2.3649L16.1856 8.0386 21.4255 8.3468C23.2632 8.4549 23.9912 10.7786 22.5437 11.916L18.1816 15.3433 19.9202 20.2694C20.5648 22.0955 18.497 23.6802 16.9012 22.5831L12 19.2135 7.0988 22.5831C5.503 23.6802 3.4352 22.0955 4.0798 20.2694L5.8184 15.3433 1.4564 11.916C.0088 10.7787.7368 8.4549 2.5745 8.3468L7.8144 8.0386 10.1507 2.3649ZM12 3.1264 9 10 2.692 10.3434 8.1816 14.6567 5.9657 20.935 12 16.7865 18.0343 20.935 15.8184 14.6567 21.308 10.3434 14.8144 9.9614 12 3.1264ZL12 12 15.82 14.67 12.015 12.008 14.829 9.971 12.047 12.04 9.007 10.003 12.015 12.04 8.199 14.692 12.015 12.008 12.015 16.762"
+     fill="#0F0F0F"
+     id="path1"
+     style="stroke:url(#radialGradient2);stroke-opacity:1" />
+</svg>

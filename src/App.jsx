@@ -5,10 +5,11 @@ import CreateGroup from './components/CreateGroup'
 import SharedGroupAccess from './components/SharedGroupAccess'
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
 import { groupService } from './services/groups'
-import { useState } from 'react'
+import { sessionService } from './services/session'
+import { useState, useEffect } from 'react'
 
 // Create Group page component
-function CreateGroupPage() {
+function CreateGroupPage({ setCurrentUser }) {
   const navigate = useNavigate()
   const [error, setError] = useState(null)
 
@@ -25,6 +26,18 @@ function CreateGroupPage() {
         // Get admin PIN from the first member (admin is created first)
         const adminMember = backendGroupData.members?.find(member => member.role === 'admin')
         const adminPin = adminMember?.pin
+        
+        // Set current user as the admin
+        if (adminMember) {
+          setCurrentUser({
+            id: adminMember._id || adminMember.id,
+            name: adminMember.name,
+            pin: adminPin,
+            role: 'admin',
+            groupId: backendGroupData.uuid,
+            groupName: backendGroupData.groupName
+          })
+        }
         
         // Redirect to the shared group URL with admin PIN for auto-authentication
         navigate(`/group/${backendGroupData.uuid}`, { 
@@ -59,6 +72,22 @@ function CreateGroupPage() {
 // App content component with access to navigate
 function AppContent() {
   const navigate = useNavigate()
+  const [currentUser, setCurrentUser] = useState(null)
+
+  // Load user session on mount
+  useEffect(() => {
+    const session = sessionService.getSession()
+    if (session) {
+      setCurrentUser(session)
+    }
+  }, [])
+
+  // Update session when user changes
+  useEffect(() => {
+    if (currentUser) {
+      sessionService.saveSession(currentUser)
+    }
+  }, [currentUser])
   
   const handleNavHome = () => {
     navigate('/')
@@ -66,12 +95,12 @@ function AppContent() {
 
   return (
     <div className="app">
-      <Navbar onHomeClick={handleNavHome} />
+      <Navbar onHomeClick={handleNavHome} user={currentUser} />
       <main className="main-container">
         <Routes>
           <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
-          <Route path="/create" element={<CreateGroupPage />} />
-          <Route path="/group/:uuid" element={<SharedGroupAccess />} />
+          <Route path="/create" element={<CreateGroupPage setCurrentUser={setCurrentUser} />} />
+          <Route path="/group/:uuid" element={<SharedGroupAccess setCurrentUser={setCurrentUser} />} />
         </Routes>
       </main>
     </div>

@@ -6,7 +6,7 @@ import GroupSettings from './GroupSettings'
 import MemberManagement from './MemberManagement'
 import { getGroupByUUID, verifyGroupPin } from '../services/groups'
 
-function SharedGroupAccess() {
+function SharedGroupAccess({ setCurrentUser }) {
   const { uuid } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -63,6 +63,19 @@ function SharedGroupAccess() {
             const groupData = response.data || response.group
             setFullGroupData(groupData)
             setIsAuthenticated(true)
+            
+            // Find the admin member and set as current user
+            const adminMember = groupData.members?.find(member => member.pin === adminPin)
+            if (adminMember && setCurrentUser) {
+              setCurrentUser({
+                id: adminMember._id || adminMember.id,
+                name: adminMember.name,
+                pin: adminPin,
+                role: adminMember.role,
+                groupId: uuid,
+                groupName: groupData.groupName
+              })
+            }
           }
         } catch (err) {
           console.error('❌ Auto-authentication error:', err)
@@ -71,7 +84,7 @@ function SharedGroupAccess() {
     }
 
     autoAuthenticate()
-  }, [uuid, location.state, isAuthenticated])
+  }, [uuid, location.state, isAuthenticated, setCurrentUser])
 
   const handlePinSubmit = async (pin) => {
     setPinError('')
@@ -83,6 +96,19 @@ function SharedGroupAccess() {
         const groupData = response.data || response.group
         setFullGroupData(groupData)
         setIsAuthenticated(true)
+        
+        // Find the authenticated member and set as current user
+        const authenticatedMember = groupData.members?.find(member => member.pin === pin)
+        if (authenticatedMember && setCurrentUser) {
+          setCurrentUser({
+            id: authenticatedMember._id || authenticatedMember.id,
+            name: authenticatedMember.name,
+            pin: pin,
+            role: authenticatedMember.role,
+            groupId: uuid,
+            groupName: groupData.groupName
+          })
+        }
       } else {
         setPinError('Invalid PIN. Please try again.')
       }
