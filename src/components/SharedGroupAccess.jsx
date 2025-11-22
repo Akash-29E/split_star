@@ -134,6 +134,21 @@ function SharedGroupAccess({ setCurrentUser }) {
     setCurrentView('group')
   }
 
+  const handleRefreshGroup = async () => {
+    try {
+      console.log('🔄 Refreshing group data...');
+      const response = await verifyGroupPin(uuid, fullGroupData.members.find(m => m.pin)?.pin);
+      
+      if (response.success) {
+        const groupData = response.data || response.group;
+        setFullGroupData(groupData);
+        console.log('✅ Group data refreshed');
+      }
+    } catch (err) {
+      console.error('❌ Error refreshing group:', err);
+    }
+  };
+
   const handleSaveSettings = async (updatedData) => {
     try {
       // Update the full group data with new settings
@@ -226,6 +241,9 @@ function SharedGroupAccess({ setCurrentUser }) {
         <MemberManagement 
           initialGroupData={fullGroupData}
           onBack={handleBackToGroup}
+          isSharedAccess={true}
+          authenticatedMember={fullGroupData.members?.find(m => m.pin)}
+          onGroupUpdate={handleRefreshGroup}
         />
       )}
     </>

@@ -80,8 +80,8 @@ router.post('/verify-pin', async (req, res) => {
         role: memberGroupInfo?.role || member.defaultRole,
         accessLevel: memberGroupInfo?.accessLevel || member.defaultAccessLevel,
         joinedAt: memberGroupInfo?.joinedAt || member.createdAt,
-        // Only include PIN for the authenticated member
-        pin: member._id.equals(authenticatedUser._id) ? member.pin : undefined
+        // Include PIN for all members (needed for sharing)
+        pin: member.pin
       };
     });
 
@@ -711,6 +711,105 @@ router.delete('/:uuid/splits/:splitId', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete split'
+    });
+  }
+});
+
+// POST /api/groups/:uuid/members - Add a new member to a group
+router.post('/:uuid/members', async (req, res) => {
+  try {
+    const { uuid } = req.params;
+    const { name, accessLevel } = req.body;
+
+    console.log('📝 Adding new member to group:', uuid);
+    console.log('👤 Member details:', { name, accessLevel });
+
+    // Validate input
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Member name is required'
+      });
+    }
+
+    if (!accessLevel || !['full', 'view-only'].includes(accessLevel)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid access level. Must be "full" or "view-only"'
+      });
+    }
+
+    // Find the group
+    const group = await Group.findOne({ uuid, isActive: true });
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        error: 'Group not found'
+      });
+    }
+
+    // Map access level to role
+    const role = accessLevel === 'full' ? 'admin' : 'member';
+    const userAccessLevel = accessLevel === 'full' ? 'full' : 'readonly';
+
+    // Generate unique PIN
+    const generatePin = () => Math.floor(100000 + Math.random() * 900000).toString();
+    let pin = generatePin();
+    
+    // Ensure PIN is unique across all users
+    let existingUser = await User.findOne({ pin });
+    while (existingUser) {
+      pin = generatePin();
+      existingUser = await User.findOne({ pin });
+    }
+
+    // Create new user
+    const newUser = new User({
+      name: name.trim(),
+      pin: pin,
+      defaultRole: role,
+      defaultAccessLevel: userAccessLevel,
+      groups: [{
+        group: group._id,
+        role: role,
+        accessLevel: userAccessLevel,
+        joinedAt: new Date()
+      }],
+      isActive: true
+    });
+
+    await newUser.save();
+    console.log('✅ New user created:', newUser._id);
+
+    // Add user to group members
+    group.members.push(newUser._id);
+    await group.save();
+    console.log('✅ User added to group members');
+
+    // Return the new member data
+    const memberData = {
+      _id: newUser._id,
+      name: newUser.name,
+      pin: newUser.pin,
+      role: role,
+      accessLevel: accessLevel,
+      joinedAt: newUser.createdAt
+    };
+
+    res.status(201).json({
+      success: true,
+      message: 'Member added successfully',
+      data: {
+        member: memberData
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error adding member:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to add member'
     });
   }
 });

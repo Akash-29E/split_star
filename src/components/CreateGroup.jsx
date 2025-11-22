@@ -1,15 +1,27 @@
 import './CreateGroup.css'
 import TextField from './TextField'
 import Button from './Button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { validatePersonRemoval, validatePersonCount, validateForm, VALIDATION_RULES } from '../utils/validation'
 
-function CreateGroup({ onCreateGroup }) {
+function CreateGroup({ onCreateGroup, currentUser }) {
   const [personCount, setPersonCount] = useState(2)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [groupName, setGroupName] = useState('')
-  const [personNames, setPersonNames] = useState({})
+  const [personNames, setPersonNames] = useState(
+    currentUser ? { 1: currentUser.name } : {}
+  )
+
+  // Update Person 1 name when currentUser becomes available
+  useEffect(() => {
+    if (currentUser && currentUser.name) {
+      setPersonNames(prev => ({
+        ...prev,
+        1: currentUser.name
+      }));
+    }
+  }, [currentUser]);
 
   const handleAddPerson = () => {
     const newCount = personCount + 1
@@ -91,7 +103,7 @@ return (
             </div>
             <div className="person-fields">
                 {Array.from({ length: personCount }, (_, index) => (
-                    <div key={index + 1} className="person-field-row">
+                    <div key={index + 1} className="person-field-row" title={index === 0 && currentUser ? 'Current user' : ''}>
                         <TextField 
                             label={index === 0 ? 'Person 1 (You)' : `Person ${index + 1}`}
                             placeholder={`Enter name of person ${index + 1}`}
@@ -99,6 +111,7 @@ return (
                             value={personNames[index + 1] || ''}
                             onChange={(e) => handlePersonNameChange(index + 1, e)}
                             maxLength={VALIDATION_RULES.MAX_PERSON_NAME_LENGTH}
+                            disabled={index === 0 && currentUser}
                         />
                         <Button variant="remove" size="small" onClick={handleRemovePerson}>
                             -

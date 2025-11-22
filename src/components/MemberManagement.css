@@ -176,10 +176,12 @@
   transition: opacity 0.3s ease;
 }
 
-.member-action-icon svg {
+.member-action-icon svg,
+.member-action-icon img {
   position: relative;
   z-index: 1;
   transition: transform 0.3s ease;
+  filter: brightness(0) invert(1);
 }
 
 .member-action-icon:last-child {
@@ -199,7 +201,8 @@
   opacity: 1;
 }
 
-.member-action-icon:hover svg {
+.member-action-icon:hover svg,
+.member-action-icon:hover img {
   transform: scale(1.15) rotate(5deg);
 }
 
@@ -250,6 +253,163 @@
   font-size: 0.85rem;
   font-weight: 400;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.add-member-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 140px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  gap: 0.75rem;
+}
+
+.add-member-card:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--hover-color);
+  transform: translateY(-2px);
+}
+
+.add-member-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.3s ease;
+}
+
+.add-member-icon img {
+  filter: brightness(0) invert(1);
+}
+
+.add-member-card:hover .add-member-icon {
+  background: var(--hover-color);
+  color: #ffffff;
+  transform: rotate(90deg);
+}
+
+.add-member-text {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.3s ease;
+}
+
+.add-member-card:hover .add-member-text {
+  color: var(--hover-color);
+}
+
+/* Add Member Form */
+.add-member-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.form-input {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.95rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #ffffff;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.form-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--hover-color);
+  box-shadow: 0 0 0 3px rgba(254, 215, 102, 0.1);
+}
+
+.form-input:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+select.form-input {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='rgba(255,255,255,0.7)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 3rem;
+  appearance: none;
+}
+
+select.form-input option {
+  background: #1a1a2e;
+  color: #ffffff;
+}
+
+/* Share Info Styling */
+.share-info-container {
+  margin-top: 0.5rem;
+}
+
+.share-info-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.share-text {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.share-text strong {
+  color: var(--hover-color);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.share-link {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  word-break: break-all;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'Courier New', monospace;
 }
 
 /* Responsive design */

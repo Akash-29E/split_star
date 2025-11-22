@@ -278,6 +278,45 @@ export const groupService = {
       console.error('❌ Get splits full error:', error);
       throw new Error(error.message || 'Failed to fetch splits');
     }
+  },
+
+  // Add a new member to a group
+  async addMember(groupUuid, memberData) {
+    try {
+      const url = `${apiService.baseURL}/groups/${groupUuid}/members`;
+      console.log('👤 Adding member to group:', groupUuid);
+      console.log('📤 Member data:', memberData);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(memberData)
+      });
+      
+      console.log('📥 Add member response status:', response.status);
+      
+      if (!response.ok) {
+        const responseText = await response.text();
+        console.error('❌ Add member error response:', responseText);
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.error || 'Failed to add member');
+        } catch (parseError) {
+          console.error('❌ Failed to parse add member error response:', parseError);
+          throw new Error(`Server error: ${response.status} - ${responseText.substring(0, 100)}`);
+        }
+      }
+      
+      const data = await response.json();
+      console.log('✅ Member added successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Add member full error:', error);
+      throw new Error(error.message || 'Failed to add member');
+    }
   }
 };
 

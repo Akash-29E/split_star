@@ -1,6 +1,18 @@
+import { useState } from 'react'
 import './MemberManagement.css'
+import Popup from './Popup'
+import groupService from '../services/groups'
+import useToast from '../hooks/useToast'
 
-function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess, authenticatedMember }) {
+function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess, authenticatedMember, onGroupUpdate }) {
+  const [showAddMemberPopup, setShowAddMemberPopup] = useState(false);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberAccessLevel, setNewMemberAccessLevel] = useState('full');
+  const [isAddingMember, setIsAddingMember] = useState(false);
+  const [showSharePopup, setShowSharePopup] = useState(false);
+  const [selectedMemberToShare, setSelectedMemberToShare] = useState(null);
+  const { showToast } = useToast();
+
   // Use initialGroupData if provided (for shared access), otherwise use groupData
   const currentGroupData = initialGroupData || groupData;
   
@@ -9,6 +21,72 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
     ? authenticatedMember 
     : currentGroupData?.members?.find(member => member.role === 'admin') || 
       currentGroupData?.members?.[0];
+
+  const handleAddMember = async () => {
+    // Validate name
+    if (!newMemberName.trim()) {
+      showToast('Please enter a member name', 'error');
+      return;
+    }
+
+    setIsAddingMember(true);
+    
+    try {
+      const memberData = {
+        name: newMemberName.trim(),
+        accessLevel: newMemberAccessLevel
+      };
+
+      const response = await groupService.addMember(currentGroupData.uuid, memberData);
+      
+      if (response.success) {
+        showToast(`${newMemberName} added successfully! PIN: ${response.data.member.pin}`, 'success');
+        
+        // Refresh group data if callback provided
+        if (onGroupUpdate) {
+          await onGroupUpdate();
+        }
+        
+        // Close popup and reset form
+        setShowAddMemberPopup(false);
+        setNewMemberName('');
+        setNewMemberAccessLevel('full');
+      }
+    } catch (error) {
+      console.error('Error adding member:', error);
+      showToast(error.message || 'Failed to add member', 'error');
+    } finally {
+      setIsAddingMember(false);
+    }
+  };
+
+  const handleCancelAddMember = () => {
+    setShowAddMemberPopup(false);
+    setNewMemberName('');
+    setNewMemberAccessLevel('full');
+  };
+
+  const handleShareWithMember = (member) => {
+    setSelectedMemberToShare(member);
+    setShowSharePopup(true);
+  };
+
+  const handleCloseSharePopup = () => {
+    setShowSharePopup(false);
+    setSelectedMemberToShare(null);
+  };
+
+  const handleCopyShareInfo = () => {
+    const shareLink = `${window.location.origin}/group/${currentGroupData.uuid}`;
+    const shareText = `Enjoy splitting expenses with Splitstar, ${selectedMemberToShare.name}!\nYour PIN to login is: ${selectedMemberToShare.pin}\n${shareLink}`;
+    
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Share information copied to clipboard!', 'success');
+    }).catch((error) => {
+      console.error('Failed to copy:', error);
+      showToast('Failed to copy to clipboard', 'error');
+    });
+  };
 
   return (
     <div className="main-content">
@@ -63,9 +141,7 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
                         {isCurrentUser ? (
                           <>
                             <button className="member-action-icon" title="Edit member">
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11.333 2.00004C11.5081 1.82494 11.716 1.68605 11.9447 1.59129C12.1735 1.49653 12.4187 1.44775 12.6663 1.44775C12.914 1.44775 13.1592 1.49653 13.3879 1.59129C13.6167 1.68605 13.8246 1.82494 13.9997 2.00004C14.1748 2.17513 14.3137 2.383 14.4084 2.61178C14.5032 2.84055 14.552 3.08575 14.552 3.33337C14.552 3.58099 14.5032 3.82619 14.4084 4.05497C14.3137 4.28374 14.1748 4.49161 13.9997 4.66671L4.99967 13.6667L1.33301 14.6667L2.33301 11L11.333 2.00004Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <img src="/svg/editIcon.svg" width="16" height="16" alt="Edit" />
                             </button>
                             <div className="member-action-icon disabled"></div>
                             <div className="member-action-icon disabled"></div>
@@ -73,24 +149,17 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
                         ) : (
                           <>
                             <button className="member-action-icon" title="Edit member">
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M11.333 2.00004C11.5081 1.82494 11.716 1.68605 11.9447 1.59129C12.1735 1.49653 12.4187 1.44775 12.6663 1.44775C12.914 1.44775 13.1592 1.49653 13.3879 1.59129C13.6167 1.68605 13.8246 1.82494 13.9997 2.00004C14.1748 2.17513 14.3137 2.383 14.4084 2.61178C14.5032 2.84055 14.552 3.08575 14.552 3.33337C14.552 3.58099 14.5032 3.82619 14.4084 4.05497C14.3137 4.28374 14.1748 4.49161 13.9997 4.66671L4.99967 13.6667L1.33301 14.6667L2.33301 11L11.333 2.00004Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <img src="/svg/editIcon.svg" width="16" height="16" alt="Edit" />
                             </button>
                             <button className="member-action-icon" title="Delete member">
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M2 4H3.33333H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M5.33301 4.00004V2.66671C5.33301 2.31309 5.47348 1.97395 5.72353 1.7239C5.97358 1.47385 6.31272 1.33337 6.66634 1.33337H9.33301C9.68663 1.33337 10.0258 1.47385 10.2758 1.7239C10.5259 1.97395 10.6663 2.31309 10.6663 2.66671V4.00004M12.6663 4.00004V13.3334C12.6663 13.687 12.5259 14.0261 12.2758 14.2762C12.0258 14.5262 11.6866 14.6667 11.333 14.6667H4.66634C4.31272 14.6667 3.97358 14.5262 3.72353 14.2762C3.47348 14.0261 3.33301 13.687 3.33301 13.3334V4.00004H12.6663Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                              <img src="/svg/deleteIcon.svg" width="16" height="16" alt="Delete" />
                             </button>
-                            <button className="member-action-icon" title="Share with member">
-                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 5.33337C13.1046 5.33337 14 4.43794 14 3.33337C14 2.22881 13.1046 1.33337 12 1.33337C10.8954 1.33337 10 2.22881 10 3.33337C10 4.43794 10.8954 5.33337 12 5.33337Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M4 10C5.10457 10 6 9.10461 6 8.00004C6 6.89547 5.10457 6.00004 4 6.00004C2.89543 6.00004 2 6.89547 2 8.00004C2 9.10461 2.89543 10 4 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M12 14.6666C13.1046 14.6666 14 13.7712 14 12.6666C14 11.5621 13.1046 10.6666 12 10.6666C10.8954 10.6666 10 11.5621 10 12.6666C10 13.7712 10.8954 14.6666 12 14.6666Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M5.72656 9.00671L10.2799 11.66" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M10.2732 4.34003L5.72656 6.99337" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                              </svg>
+                            <button 
+                              className="member-action-icon" 
+                              title="Share with member"
+                              onClick={() => handleShareWithMember(member)}
+                            >
+                              <img src="/svg/shareIcon.svg" width="16" height="16" alt="Share" />
                             </button>
                           </>
                         )}
@@ -99,12 +168,92 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
                   );
                 })
               )}
+              
+              {/* Add Member Card */}
+              <div className="add-member-card" onClick={() => setShowAddMemberPopup(true)}>
+                <div className="add-member-icon">
+                  <img src="/svg/plusIcon.svg" width="40" height="40" alt="Add Member" />
+                </div>
+                <span className="add-member-text">Add Member</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Add Member Popup */}
+      <Popup
+        isOpen={showAddMemberPopup}
+        onClose={isAddingMember ? undefined : handleCancelAddMember}
+        title="Add New Member"
+        subtitle="Enter member details"
+        type="info"
+        primaryButtonText={isAddingMember ? "Adding..." : "Add"}
+        secondaryButtonText="Cancel"
+        onPrimaryClick={handleAddMember}
+        onSecondaryClick={handleCancelAddMember}
+        showSecondaryButton={!isAddingMember}
+      >
+        <div className="add-member-form">
+          <div className="form-group">
+            <label htmlFor="memberName" className="form-label">Name</label>
+            <input
+              type="text"
+              id="memberName"
+              className="form-input"
+              placeholder="Enter member name"
+              value={newMemberName}
+              onChange={(e) => setNewMemberName(e.target.value)}
+              disabled={isAddingMember}
+              autoFocus
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="accessLevel" className="form-label">Access Level</label>
+            <select
+              id="accessLevel"
+              className="form-input"
+              value={newMemberAccessLevel}
+              onChange={(e) => setNewMemberAccessLevel(e.target.value)}
+              disabled={isAddingMember}
+            >
+              <option value="full">Full Access</option>
+              <option value="view-only">View Only</option>
+            </select>
+          </div>
+        </div>
+      </Popup>
+
+      {/* Share Member Popup */}
+      <Popup
+        isOpen={showSharePopup}
+        onClose={handleCloseSharePopup}
+        title={`Share with ${selectedMemberToShare?.name || 'Member'}`}
+        subtitle="Copy this information to share"
+        type="info"
+        primaryButtonText="Copy"
+        secondaryButtonText="Close"
+        onPrimaryClick={handleCopyShareInfo}
+        onSecondaryClick={handleCloseSharePopup}
+        showSecondaryButton={true}
+      >
+        <div className="share-info-container">
+          <div className="share-info-box">
+            <p className="share-text">
+              Enjoy splitting expenses with Splitstar, {selectedMemberToShare?.name}!
+            </p>
+            <p className="share-text">
+              Your PIN to login is: <strong>{selectedMemberToShare?.pin}</strong>
+            </p>
+            <p className="share-text share-link">
+              {window.location.origin}/group/{currentGroupData?.uuid}
+            </p>
+          </div>
+        </div>
+      </Popup>
     </div>
-  )
+  );
 }
 
-export default MemberManagement
+export default MemberManagement;

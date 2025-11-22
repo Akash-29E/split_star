@@ -222,8 +222,12 @@
   transform: rotate(180deg);
 }
 
-.balance-container .accordion-arrow svg {
+.balance-container .accordion-arrow svg,
+.balance-container .accordion-arrow img,
+.members-select img,
+.paid-by-select img {
   color: rgba(255, 255, 255, 0.7);
+  filter: brightness(0) invert(1);
 }
 
 /* Balance breakdown section */
@@ -328,10 +332,10 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.settle-button:hover {
-  /* transform: translateY(-1px); */
-  /* box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2); */
-}
+/* .settle-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+} */
 
 .settle-button:active {
   transform: translateY(0);
@@ -683,8 +687,17 @@
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.accordion-arrow svg {
+.accordion-arrow svg,
+.accordion-arrow img {
   color: rgba(255, 255, 255, 0.7);
+  filter: brightness(0) invert(1);
+}
+
+/* Button icon filters */
+.members-button img,
+.settings-button img,
+.share-button img {
+  filter: brightness(0) invert(1);
 }
 
 /* Accordion transition styles */
@@ -1091,7 +1104,7 @@
 .image-icon {
   color: #ffffff;
   transition: all 0.3s ease;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  filter: brightness(0) invert(1);
 }
 
 .add-image-button:hover .image-icon {
@@ -1694,6 +1707,10 @@
   justify-content: center;
 }
 
+.action-btn img {
+  filter: brightness(0) invert(1);
+}
+
 .action-btn:hover {
   background: rgba(255, 255, 255, 0.15);
   color: rgba(255, 255, 255, 0.9);
@@ -1769,6 +1786,7 @@
   height: 32px;
   margin-bottom: 0.5rem;
   opacity: 0.6;
+  filter: brightness(0) invert(1);
 }
 
 .placeholder-text {

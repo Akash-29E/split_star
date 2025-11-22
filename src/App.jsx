@@ -9,7 +9,7 @@ import { sessionService } from './services/session'
 import { useState, useEffect } from 'react'
 
 // Create Group page component
-function CreateGroupPage({ setCurrentUser }) {
+function CreateGroupPage({ setCurrentUser, currentUser }) {
   const navigate = useNavigate()
   const [error, setError] = useState(null)
 
@@ -64,7 +64,7 @@ function CreateGroupPage({ setCurrentUser }) {
           <button onClick={() => setError(null)}>×</button>
         </div>
       )}
-      <CreateGroup onCreateGroup={handleCreateGroup} />
+      <CreateGroup onCreateGroup={handleCreateGroup} currentUser={currentUser} />
     </div>
   )
 }
@@ -86,6 +86,8 @@ function AppContent() {
   useEffect(() => {
     if (currentUser) {
       sessionService.saveSession(currentUser)
+    } else {
+      sessionService.clearSession()
     }
   }, [currentUser])
   
@@ -93,13 +95,18 @@ function AppContent() {
     navigate('/')
   }
 
+  const handleLogout = () => {
+    setCurrentUser(null)
+    sessionService.clearSession()
+  }
+
   return (
     <div className="app">
-      <Navbar onHomeClick={handleNavHome} user={currentUser} />
+      <Navbar onHomeClick={handleNavHome} user={currentUser} onLogout={handleLogout} />
       <main className="main-container">
         <Routes>
           <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
-          <Route path="/create" element={<CreateGroupPage setCurrentUser={setCurrentUser} />} />
+          <Route path="/create" element={<CreateGroupPage setCurrentUser={setCurrentUser} currentUser={currentUser} />} />
           <Route path="/group/:uuid" element={<SharedGroupAccess setCurrentUser={setCurrentUser} />} />
         </Routes>
       </main>
