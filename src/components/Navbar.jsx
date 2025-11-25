@@ -66,6 +66,11 @@ function Navbar({ onHomeClick, user, onLogout }) {
     console.log('Settings clicked');
   }
 
+  const handleGroups = () => {
+    setShowDropdown(false);
+    navigate('/groups');
+  }
+
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -97,6 +102,10 @@ function Navbar({ onHomeClick, user, onLogout }) {
             </div>
             {showDropdown && (
               <div className="user-dropdown-menu">
+                <button className="dropdown-item" onClick={handleGroups}>
+                  <img src="/svg/groupIcon.svg" width="16" height="16" alt="Groups" />
+                  Groups
+                </button>
                 <button className="dropdown-item" onClick={handleSettings}>
                   <img src="/svg/settingsIcon.svg" width="16" height="16" alt="Settings" />
                   Settings

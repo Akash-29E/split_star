@@ -5,8 +5,9 @@ import GroupPage from './GroupPage'
 import GroupSettings from './GroupSettings'
 import MemberManagement from './MemberManagement'
 import { getGroupByUUID, verifyGroupPin } from '../services/groups'
+import { sessionService } from '../services/session'
 
-function SharedGroupAccess({ setCurrentUser }) {
+function SharedGroupAccess({ setCurrentUser, currentUser }) {
   const { uuid } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -50,6 +51,55 @@ function SharedGroupAccess({ setCurrentUser }) {
     loadGroupInfo()
   }, [uuid])
 
+  // Auto-authenticate if user is already logged in and has access to this group
+  useEffect(() => {
+    const autoAuthenticateLoggedInUser = async () => {
+      // Skip if already authenticated or loading
+      if (isAuthenticated || loading || !uuid) {
+        return
+      }
+
+      // Check if user has a stored membership for this group
+      const groupMembership = sessionService.getGroupMembership(uuid)
+      
+      if (groupMembership && groupMembership.pin) {
+        try {
+          console.log('🔐 Auto-authenticating with stored membership...')
+          const response = await verifyGroupPin(uuid, groupMembership.pin)
+          
+          if (response.success) {
+            const groupData = response.data || response.group
+            setFullGroupData(groupData)
+            setIsAuthenticated(true)
+            
+            // Find the authenticated member
+            const authenticatedMember = groupData.members?.find(member => member.pin === groupMembership.pin)
+            if (authenticatedMember && setCurrentUser) {
+              setCurrentUser({
+                id: authenticatedMember._id || authenticatedMember.id,
+                name: authenticatedMember.name,
+                pin: groupMembership.pin,
+                role: authenticatedMember.role,
+                groupId: uuid,
+                groupName: groupData.groupName
+              })
+            }
+            console.log('✅ Auto-authentication successful')
+          } else {
+            console.log('⚠️ Auto-authentication failed - invalid PIN for this group')
+            // Clear invalid membership
+            sessionService.saveGroupMembership(uuid, null)
+          }
+        } catch (err) {
+          console.log('⚠️ Auto-authentication error:', err.message)
+          // Don't show error, just let user enter PIN manually
+        }
+      }
+    }
+
+    autoAuthenticateLoggedInUser()
+  }, [uuid, loading, isAuthenticated, setCurrentUser])
+
   // Auto-authenticate if admin PIN is provided (for group creators)
   useEffect(() => {
     const autoAuthenticate = async () => {
@@ -66,15 +116,26 @@ function SharedGroupAccess({ setCurrentUser }) {
             
             // Find the admin member and set as current user
             const adminMember = groupData.members?.find(member => member.pin === adminPin)
-            if (adminMember && setCurrentUser) {
-              setCurrentUser({
+            if (adminMember) {
+              // Save group membership for future auto-authentication
+              sessionService.saveGroupMembership(uuid, {
                 id: adminMember._id || adminMember.id,
                 name: adminMember.name,
                 pin: adminPin,
                 role: adminMember.role,
-                groupId: uuid,
                 groupName: groupData.groupName
               })
+              
+              if (setCurrentUser) {
+                setCurrentUser({
+                  id: adminMember._id || adminMember.id,
+                  name: adminMember.name,
+                  pin: adminPin,
+                  role: adminMember.role,
+                  groupId: uuid,
+                  groupName: groupData.groupName
+                })
+              }
             }
           }
         } catch (err) {
@@ -99,15 +160,26 @@ function SharedGroupAccess({ setCurrentUser }) {
         
         // Find the authenticated member and set as current user
         const authenticatedMember = groupData.members?.find(member => member.pin === pin)
-        if (authenticatedMember && setCurrentUser) {
-          setCurrentUser({
+        if (authenticatedMember) {
+          // Save group membership for future auto-authentication
+          sessionService.saveGroupMembership(uuid, {
             id: authenticatedMember._id || authenticatedMember.id,
             name: authenticatedMember.name,
             pin: pin,
             role: authenticatedMember.role,
-            groupId: uuid,
             groupName: groupData.groupName
           })
+          
+          if (setCurrentUser) {
+            setCurrentUser({
+              id: authenticatedMember._id || authenticatedMember.id,
+              name: authenticatedMember.name,
+              pin: pin,
+              role: authenticatedMember.role,
+              groupId: uuid,
+              groupName: groupData.groupName
+            })
+          }
         }
       } else {
         setPinError('Invalid PIN. Please try again.')
@@ -137,12 +209,21 @@ function SharedGroupAccess({ setCurrentUser }) {
   const handleRefreshGroup = async () => {
     try {
       console.log('🔄 Refreshing group data...');
-      const response = await verifyGroupPin(uuid, fullGroupData.members.find(m => m.pin)?.pin);
+      // Find any member's PIN (preferably the authenticated member)
+      const memberPin = fullGroupData.authenticatedMember?.pin || 
+                       fullGroupData.members?.find(m => m.pin)?.pin;
+      
+      if (!memberPin) {
+        console.error('❌ No PIN available for refresh');
+        return;
+      }
+      
+      const response = await verifyGroupPin(uuid, memberPin);
       
       if (response.success) {
         const groupData = response.data || response.group;
         setFullGroupData(groupData);
-        console.log('✅ Group data refreshed');
+        console.log('✅ Group data refreshed with updated personCount:', groupData.personCount);
       }
     } catch (err) {
       console.error('❌ Error refreshing group:', err);

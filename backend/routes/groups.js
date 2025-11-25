@@ -784,6 +784,8 @@ router.post('/:uuid/members', async (req, res) => {
 
     // Add user to group members
     group.members.push(newUser._id);
+    // Increment personCount to reflect the new member
+    group.personCount = group.members.length;
     await group.save();
     console.log('✅ User added to group members');
 
@@ -801,7 +803,8 @@ router.post('/:uuid/members', async (req, res) => {
       success: true,
       message: 'Member added successfully',
       data: {
-        member: memberData
+        member: memberData,
+        personCount: group.personCount
       }
     });
 

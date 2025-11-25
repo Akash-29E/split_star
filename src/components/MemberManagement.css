@@ -37,6 +37,24 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
+.back-button{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-arrow-icon {
+  width: 16px;
+  height: 16px;
+  margin-top: 0.2;
+  /* margin-right: 0.5rem; */
+  filter: brightness(0) invert(1);
+}
+
+.back-button:hover .back-arrow-icon {
+  filter: var(--hover-color-filter);
+}
+
 .page-title {
   font-family: 'Quicksand', sans-serif;
   font-size: 2.5rem;

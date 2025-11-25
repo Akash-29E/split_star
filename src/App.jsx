@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import LandingPage from './components/LandingPage'
 import CreateGroup from './components/CreateGroup'
 import SharedGroupAccess from './components/SharedGroupAccess'
+import UserGroups from './components/UserGroups'
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
 import { groupService } from './services/groups'
 import { sessionService } from './services/session'
@@ -98,6 +99,8 @@ function AppContent() {
   const handleLogout = () => {
     setCurrentUser(null)
     sessionService.clearSession()
+    sessionService.clearGroupMemberships()
+    navigate('/')
   }
 
   return (
@@ -107,7 +110,8 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
           <Route path="/create" element={<CreateGroupPage setCurrentUser={setCurrentUser} currentUser={currentUser} />} />
-          <Route path="/group/:uuid" element={<SharedGroupAccess setCurrentUser={setCurrentUser} />} />
+          <Route path="/groups" element={<UserGroups onBack={handleNavHome} />} />
+          <Route path="/group/:uuid" element={<SharedGroupAccess setCurrentUser={setCurrentUser} currentUser={currentUser} />} />
         </Routes>
       </main>
     </div>

@@ -93,7 +93,7 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
       <div className="member-management-container">
         <div className="member-management-header">
           <button className="back-button" onClick={onBack}>
-            ← Back to Group
+            <img src="/svg/backarrow.svg" className="back-arrow-icon" alt="Back" /> Back to Group
           </button>
           <h1 className="page-title">Member Management</h1>
         </div>
