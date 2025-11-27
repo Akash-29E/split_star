@@ -64,49 +64,47 @@ function UserGroups({ onBack }) {
           <h1 className="page-title">Your Groups</h1>
         </div>
 
-        <div className="user-groups-content">
-          {loading ? (
-            <div className="loading-state">
-              <p>Loading your groups...</p>
-            </div>
-          ) : groups.length === 0 ? (
-            <div className="empty-state">
-              <img src="/svg/groupIcon.svg" width="64" height="64" alt="No groups" style={{ opacity: 0.3 }} />
-              <h3>No Groups Yet</h3>
-              <p>You haven't joined any groups yet. Create or join a group to get started!</p>
-            </div>
-          ) : (
-            <div className="groups-list">
-              {groups.map((group) => (
-                <div 
-                  key={group.uuid} 
-                  className="group-card"
-                  onClick={() => handleGroupClick(group.uuid)}
-                >
-                  <div className="group-card-content">
-                    <div className="group-icon">
-                      <img src="/svg/groupIcon.svg" width="24" height="24" alt="Group" />
-                    </div>
-                    <div className="group-info">
-                      <h3 className="group-name">{group.groupName}</h3>
-                      <p className="group-meta">
-                        <span className="member-info">
-                          {group.memberName} • {group.role}
-                        </span>
-                        <span className="last-accessed">
-                          {formatDate(group.lastAccessed)}
-                        </span>
-                      </p>
-                    </div>
+        {loading ? (
+          <div className="loading-state">
+            <p>Loading your groups...</p>
+          </div>
+        ) : groups.length === 0 ? (
+          <div className="empty-state">
+            <img src="/svg/groupIcon.svg" width="64" height="64" alt="No groups" style={{ opacity: 0.3 }} />
+            <h3>No Groups Yet</h3>
+            <p>You haven't joined any groups yet. Create or join a group to get started!</p>
+          </div>
+        ) : (
+          <div className="groups-list">
+            {groups.map((group) => (
+              <div 
+                key={group.uuid} 
+                className="group-card"
+                onClick={() => handleGroupClick(group.uuid)}
+              >
+                <div className="group-card-content">
+                  <div className="group-icon">
+                    <img src="/svg/groupIcon.svg" width="24" height="24" alt="Group" />
                   </div>
-                  <div className="group-card-arrow">
-                    <img src="/svg/rightArrowIcon.svg" width="16" height="16" alt="Open" />
+                  <div className="group-info">
+                    <h3 className="group-name">{group.groupName}</h3>
+                    <p className="group-meta">
+                      <span className="member-info">
+                        {group.memberName} • {group.role}
+                      </span>
+                      <span className="last-accessed">
+                        {formatDate(group.lastAccessed)}
+                      </span>
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+                <div className="group-card-arrow">
+                  <img src="/svg/rightArrowIcon.svg" width="24" height="24" alt="Open" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

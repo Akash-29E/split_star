@@ -37,19 +37,15 @@
   flex: 1;
 }
 
-.user-groups-content {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 2rem;
-  backdrop-filter: blur(20px);
-}
-
 .loading-state,
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
   color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
 }
 
 .empty-state {
@@ -78,8 +74,8 @@
 }
 
 .group-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 1.25rem;
   display: flex;
@@ -87,11 +83,12 @@
   justify-content: space-between;
   cursor: pointer;
   transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
 }
 
 .group-card:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
   transform: translateX(4px);
 }
 
@@ -105,12 +102,18 @@
 .group-icon {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.group-icon img {
+  width: 24px;
+  height: 24px;
+  filter: var(--white-color-filter);
 }
 
 .group-info {
@@ -154,6 +157,12 @@
   flex-shrink: 0;
 }
 
+.group-card-arrow img {
+  width: 24px;
+  height: 24px;
+  filter: var(--white-color-filter);
+}
+
 .group-card:hover .group-card-arrow {
   opacity: 1;
   transform: translateX(4px);
@@ -167,10 +176,6 @@
 
   .user-groups-header .page-title {
     font-size: 1.5rem;
-  }
-
-  .user-groups-content {
-    padding: 1.5rem;
   }
 
   .group-meta {

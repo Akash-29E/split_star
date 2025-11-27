@@ -60,6 +60,12 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     amount: ''
   });
   
+  // Image link popup state
+  const [imagePopup, setImagePopup] = useState({
+    isOpen: false,
+    imageLink: ''
+  });
+  
   // Popup state
   const [popupConfig, setPopupConfig] = useState({
     isOpen: false,
@@ -602,8 +608,32 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   };
 
   const handleAddImage = () => {
-    // TODO: Implement image upload logic
-    showSuccess('Add image functionality coming soon!');
+    setImagePopup({
+      isOpen: true,
+      imageLink: ''
+    });
+  };
+
+  const handleImageLinkChange = (e) => {
+    setImagePopup(prev => ({
+      ...prev,
+      imageLink: e.target.value
+    }));
+  };
+
+  const handleAddImageConfirm = () => {
+    if (imagePopup.imageLink.trim()) {
+      // TODO: Implement image addition logic (store with split or expense)
+      showSuccess('Image link added!');
+      console.log('Image link:', imagePopup.imageLink);
+      setImagePopup({ isOpen: false, imageLink: '' });
+    } else {
+      showError('Please enter a valid image link');
+    }
+  };
+
+  const handleCancelImagePopup = () => {
+    setImagePopup({ isOpen: false, imageLink: '' });
   };
 
   // Popup helper functions
@@ -891,6 +921,56 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
         onPrimaryClick={popupConfig.onConfirm}
         showSecondaryButton={popupConfig.showSecondaryButton}
       />
+
+      {/* Image Link Popup */}
+      <Popup
+        isOpen={imagePopup.isOpen}
+        onClose={handleCancelImagePopup}
+        title="Add Image"
+        type="info"
+        primaryButtonText="Add"
+        secondaryButtonText="Cancel"
+        onPrimaryClick={handleAddImageConfirm}
+        onSecondaryClick={handleCancelImagePopup}
+        showSecondaryButton={true}
+      >
+        <div style={{ marginTop: '1rem' }}>
+          <label style={{ 
+            display: 'block', 
+            color: 'rgba(255, 255, 255, 0.8)', 
+            marginBottom: '0.5rem',
+            fontSize: '0.9rem'
+          }}>
+            Image URL
+          </label>
+          <input
+            type="url"
+            value={imagePopup.imageLink}
+            onChange={handleImageLinkChange}
+            placeholder="https://example.com/image.jpg"
+            style={{
+              width: '100%',
+              padding: '0.75rem',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              color: 'white',
+              fontSize: '1rem',
+              fontFamily: 'Quicksand, system-ui, Avenir, Helvetica, Arial, sans-serif',
+              outline: 'none',
+              transition: 'all 0.3s ease'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+              e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+            }}
+          />
+        </div>
+      </Popup>
 
       <div className="main-content">
         <div className="group-page-container">

@@ -71,9 +71,15 @@
   height: 48px;
 }
 
+
+
 .members-button:hover {
   border-color: var(--hover-color);
   color: var(--hover-color);
+}
+
+.glass-button:hover > img {
+  filter: var(--hover-color-filter);
 }
 
 .header-actions {
@@ -1108,9 +1114,8 @@
 }
 
 .add-image-button:hover .image-icon {
-  color: var(--hover-color);
   transform: scale(1.1);
-  filter: brightness(0) invert(1);
+  filter: var(--hover-color-filter);
 }
 
 /* Member Expense Details Section */
