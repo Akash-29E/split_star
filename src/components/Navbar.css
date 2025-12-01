@@ -295,6 +295,33 @@
   filter: brightness(0) saturate(100%) invert(56%) sepia(72%) saturate(2304%) hue-rotate(326deg) brightness(101%) contrast(101%);
 }
 
+/* Login Button */
+.login-button {
+  padding: 0.65rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-family: 'Quicksand', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.login-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .navbar {
@@ -343,5 +370,10 @@
   .dropdown-item {
     font-size: 0.9rem;
     padding: 0.65rem 0.85rem;
+  }
+
+  .login-button {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
   }
 }

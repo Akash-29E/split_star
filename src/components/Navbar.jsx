@@ -2,9 +2,15 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Navbar.css'
 import { sessionService } from '../services/session'
+import Popup from './Popup'
 
 function Navbar({ onHomeClick, user, onLogout }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showLoginPopup, setShowLoginPopup] = useState(false);
+  const [loginCredentials, setLoginCredentials] = useState({
+    username: '',
+    password: ''
+  });
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -62,8 +68,7 @@ function Navbar({ onHomeClick, user, onLogout }) {
 
   const handleSettings = () => {
     setShowDropdown(false);
-    // TODO: Navigate to settings page or open settings modal
-    console.log('Settings clicked');
+    navigate('/settings');
   }
 
   const handleGroups = () => {
@@ -71,8 +76,123 @@ function Navbar({ onHomeClick, user, onLogout }) {
     navigate('/groups');
   }
 
+  const handleLogin = () => {
+    setShowLoginPopup(true);
+  }
+
+  const handleLoginSubmit = () => {
+    // TODO: Implement actual login logic
+    console.log('Login attempted with:', loginCredentials);
+    // For now, just navigate to create page
+    setShowLoginPopup(false);
+    setLoginCredentials({ username: '', password: '' });
+    navigate('/create');
+  }
+
+  const handleCancelLogin = () => {
+    setShowLoginPopup(false);
+    setLoginCredentials({ username: '', password: '' });
+  }
+
+  const handleCredentialChange = (field, value) => {
+    setLoginCredentials(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }
+
   return (
-    <nav className="navbar">
+    <>
+      {/* Login Popup */}
+      <Popup
+        isOpen={showLoginPopup}
+        onClose={handleCancelLogin}
+        title="Login"
+        type="info"
+        primaryButtonText="Login"
+        secondaryButtonText="Cancel"
+        onPrimaryClick={handleLoginSubmit}
+        onSecondaryClick={handleCancelLogin}
+        showSecondaryButton={true}
+      >
+        <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ 
+              display: 'block', 
+              color: 'rgba(255, 255, 255, 0.8)', 
+              marginBottom: '0.5rem',
+              fontSize: '0.9rem'
+            }}>
+              Username
+            </label>
+            <input
+              type="text"
+              value={loginCredentials.username}
+              onChange={(e) => handleCredentialChange('username', e.target.value)}
+              placeholder="Enter your username"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: 'white',
+                fontSize: '1rem',
+                fontFamily: 'Quicksand, system-ui, Avenir, Helvetica, Arial, sans-serif',
+                outline: 'none',
+                transition: 'all 0.3s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ 
+              display: 'block', 
+              color: 'rgba(255, 255, 255, 0.8)', 
+              marginBottom: '0.5rem',
+              fontSize: '0.9rem'
+            }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={loginCredentials.password}
+              onChange={(e) => handleCredentialChange('password', e.target.value)}
+              placeholder="Enter your password"
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: 'white',
+                fontSize: '1rem',
+                fontFamily: 'Quicksand, system-ui, Avenir, Helvetica, Arial, sans-serif',
+                outline: 'none',
+                transition: 'all 0.3s ease'
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+              }}
+            />
+          </div>
+        </div>
+      </Popup>
+
+      <nav className="navbar">
       <div className="navbar-container">
         <div className="navbar-brand" onClick={handleHomeClick} style={{ cursor: 'pointer' }}>
           <div className="brand-logo">
@@ -85,7 +205,7 @@ function Navbar({ onHomeClick, user, onLogout }) {
           <a href="#features" className="nav-link">Features</a>
           <a href="#about" className="nav-link">About</a>
         </div>
-        {user && (
+        {user ? (
           <div className="navbar-user-profile" ref={dropdownRef}>
             <div className="user-profile-wrapper" onClick={toggleDropdown}>
               <div className="user-profile-icon">
@@ -117,9 +237,14 @@ function Navbar({ onHomeClick, user, onLogout }) {
               </div>
             )}
           </div>
+        ) : (
+          <button className="login-button" onClick={handleLogin}>
+            Login
+          </button>
         )}
       </div>
     </nav>
+    </>
   )
 }
 

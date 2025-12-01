@@ -4,6 +4,7 @@ import LandingPage from './components/LandingPage'
 import CreateGroup from './components/CreateGroup'
 import SharedGroupAccess from './components/SharedGroupAccess'
 import UserGroups from './components/UserGroups'
+import UserSettings from './components/UserSettings'
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
 import { groupService } from './services/groups'
 import { sessionService } from './services/session'
@@ -111,6 +112,7 @@ function AppContent() {
           <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
           <Route path="/create" element={<CreateGroupPage setCurrentUser={setCurrentUser} currentUser={currentUser} />} />
           <Route path="/groups" element={<UserGroups onBack={handleNavHome} />} />
+          <Route path="/settings" element={<UserSettings onBack={handleNavHome} currentUser={currentUser} onUpdateUser={setCurrentUser} />} />
           <Route path="/group/:uuid" element={<SharedGroupAccess setCurrentUser={setCurrentUser} currentUser={currentUser} />} />
         </Routes>
       </main>
