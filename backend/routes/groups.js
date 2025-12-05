@@ -817,4 +817,75 @@ router.post('/:uuid/members', async (req, res) => {
   }
 });
 
+// DELETE /api/groups/:uuid/members/:memberId - Delete a member from a group (soft delete)
+router.delete('/:uuid/members/:memberId', async (req, res) => {
+  try {
+    const { uuid, memberId } = req.params;
+
+    console.log('🗑️ Deleting member from group:', uuid, 'Member:', memberId);
+
+    // Find the group
+    const group = await Group.findOne({ uuid, isActive: true });
+
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        error: 'Group not found'
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(memberId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Member not found'
+      });
+    }
+
+    // Soft delete - mark user as inactive instead of removing
+    user.isActive = false;
+    await user.save();
+    console.log('✅ User marked as inactive:', user._id);
+
+    // Mark user as deleted in all existing splits for this group
+    await Split.updateMany(
+      { 
+        groupId: group._id,
+        'memberSplits.memberId': memberId
+      },
+      { 
+        $set: { 'memberSplits.$[elem].isDeleted': true }
+      },
+      {
+        arrayFilters: [{ 'elem.memberId': memberId }]
+      }
+    );
+    console.log('✅ User marked as deleted in all splits');
+
+    // Remove user from group members array
+    group.members = group.members.filter(m => m.toString() !== memberId);
+    group.personCount = group.members.length;
+    await group.save();
+    console.log('✅ User removed from group members');
+
+    res.json({
+      success: true,
+      message: 'Member deleted successfully',
+      data: {
+        deletedMemberId: memberId,
+        personCount: group.personCount
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error deleting member:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete member'
+    });
+  }
+});
+
 export default router;

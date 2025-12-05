@@ -5,6 +5,8 @@ import Popup from './Popup'
 import useToast from '../hooks/useToast'
 import { useState, useEffect, useRef } from 'react'
 import { TextField } from '@mui/material'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 
 function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isSharedAccess, authenticatedMember }) {
   // Use initialGroupData if provided (for shared access), otherwise use groupData
@@ -33,6 +35,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   
   // Expense input states
   const [splitTitle, setSplitTitle] = useState('');
+  const [expenseDate, setExpenseDate] = useState(new Date()); // Default to today
   const [amount, setAmount] = useState('');
   const [taxPercentage, setTaxPercentage] = useState('0');
   
@@ -1071,7 +1074,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           <div className="expense-form-section glass-panel">
             <div className="expense-form">
             <div className="expense-controls">
-              {/* Split Title and Amount Row - 50% each */}
+              {/* Split Title and Date Row */}
               <div className="split-title-row">
                 <TextField
                   label="For"
@@ -1124,6 +1127,81 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                     },
                   }}
                 />
+                <div className="date-picker-container">
+                  <DatePicker
+                    selected={expenseDate}
+                    onChange={(date) => setExpenseDate(date)}
+                    dateFormat="MMM dd, yyyy"
+                    className="custom-date-picker"
+                    calendarClassName="custom-calendar"
+                    popperClassName="custom-popper"
+                    showPopperArrow={false}
+                    maxDate={new Date()}
+                    placeholderText="Select date"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    yearDropdownItemNumber={15}
+                    scrollableYearDropdown
+                    customInput={
+                      <TextField
+                        label="On"
+                        variant="outlined"
+                        className="mui-textfield date-field"
+                        fullWidth
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            color: '#ffffff',
+                            fontFamily: 'Quicksand, sans-serif',
+                            fontSize: '1rem',
+                            fontWeight: 500,
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            '& fieldset': {
+                              borderColor: 'rgba(255, 255, 255, 0.3)',
+                              borderWidth: '2px',
+                              borderRadius: '12px',
+                            },
+                            '&:hover fieldset': {
+                              borderColor: 'var(--hover-color)',
+                            },
+                            '&.Mui-focused fieldset': {
+                              borderColor: 'var(--hover-color)',
+                              borderWidth: '2px',
+                            },
+                            backgroundColor: 'transparent',
+                            backdropFilter: 'blur(15px)',
+                            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                            transition: 'all 0.3s ease',
+                          },
+                          '& .MuiOutlinedInput-root:hover': {
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+                          },
+                          '& .MuiInputLabel-root': {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            fontFamily: 'Quicksand, sans-serif',
+                            fontWeight: 600,
+                            fontSize: '0.95rem',
+                          },
+                          '& .MuiInputLabel-root.Mui-focused': {
+                            color: 'var(--hover-color)',
+                          },
+                          '& .MuiInputBase-input': {
+                            cursor: 'pointer',
+                          }
+                        }}
+                      />
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Amount and Tax Row */}
+              <div className="amount-tax-row">
                 <div className="amount-tax-container">
                   <TextField
                     label="Spent"
@@ -1319,7 +1397,9 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                     </button>
                     <div className={`members-dropdown-content ${isDropdownOpen ? 'open' : ''}`}>
                       {currentGroupData?.members && currentGroupData.members.length > 0 ? (
-                        currentGroupData.members.map((member, index) => (
+                        currentGroupData.members
+                          .filter(member => member.isActive !== false) // Filter out deleted members
+                          .map((member, index) => (
                           <label key={member._id || index} className="member-checkbox-item">
                             <input 
                               type="checkbox" 
@@ -1688,7 +1768,12 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                                   
                                   return (
                                     <div key={pIndex} className="participant-item">
-                                      <span className="participant-name">{memberSplit.memberName}</span>
+                                      <span className="participant-name">
+                                        {memberSplit.memberName}
+                                        {memberSplit.isDeleted && (
+                                          <span className="deleted-user-badge"> (Deleted user)</span>
+                                        )}
+                                      </span>
                                       <span className="participant-amount">
                                         ${owedAmount.toFixed(2)}
                                       </span>
