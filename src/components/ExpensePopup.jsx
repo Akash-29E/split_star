@@ -221,12 +221,12 @@ function ExpensePopup({
                       popper: {
                         sx: {
                           zIndex: 100000,
-                          '& .MuiPickersInputBase-root': {
+                          '.MuiPickersInputBase-root': {
                             backgroundColor: '#f5f5f5',
                             borderRadius: '12px',
                             fontSize: '14px',
                           },
-                          '& .MuiOutlinedInput-notchedOutline': {
+                          '.MuiOutlinedInput-notchedOutline': {
                             borderColor: '#9c27b0',
                           },
                         },
