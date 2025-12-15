@@ -2,11 +2,14 @@ import './GroupPage.css'
 import { groupService } from '../services/groups'
 import Toast from './Toast'
 import Popup from './Popup'
+import ExpensePopup from './ExpensePopup'
 import useToast from '../hooks/useToast'
 import { useState, useEffect, useRef } from 'react'
 import { TextField } from '@mui/material'
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import dayjs from 'dayjs'
 
 function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isSharedAccess, authenticatedMember }) {
   // Use initialGroupData if provided (for shared access), otherwise use groupData
@@ -67,6 +70,12 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   const [imagePopup, setImagePopup] = useState({
     isOpen: false,
     imageLink: ''
+  });
+  
+  // Expense popup state
+  const [expensePopup, setExpensePopup] = useState({
+    isOpen: false,
+    expenseData: null
   });
   
   // Popup state
@@ -639,6 +648,69 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     setImagePopup({ isOpen: false, imageLink: '' });
   };
 
+  // Expense popup handlers
+  const handleExpenseSubmit = async (expenseFormData) => {
+    try {
+      setIsAddingSplit(true);
+      
+      const memberSplitsData = expenseFormData.selectedMembers.map(memberId => {
+        const member = currentGroupData.members.find(m => m._id === memberId || m.id === memberId);
+        const expenseInfo = expenseFormData.memberExpenseData[memberId] || {};
+        
+        const isPayer = expenseFormData.selectedPaidBy._id === member?._id || 
+                       expenseFormData.selectedPaidBy._id === member?.id ||
+                       expenseFormData.selectedPaidBy.id === member?._id ||
+                       expenseFormData.selectedPaidBy.id === member?.id || 
+                       expenseFormData.selectedPaidBy.name === member?.name ||
+                       expenseFormData.selectedPaidBy.pin === member?.pin;
+        
+        return {
+          memberId: memberId,
+          memberName: member?.name || `Test Member ${memberId}`,
+          isParticipating: true,
+          paidAmount: isPayer ? (expenseFormData.baseAmount + (expenseFormData.baseAmount * expenseFormData.taxPercentage / 100)) : 0,
+          splitValue: {
+            amount: expenseInfo.amount ? parseFloat(expenseInfo.amount) : 0,
+            percentage: expenseInfo.percentage ? parseFloat(expenseInfo.percentage) : 0,
+            shares: expenseInfo.shares ? parseInt(expenseInfo.shares) : 1
+          }
+        };
+      });
+
+      const splitData = {
+        splitTitle: expenseFormData.splitTitle,
+        splitDescription: '',
+        baseAmount: expenseFormData.baseAmount,
+        taxPercentage: expenseFormData.taxPercentage,
+        splitMethod: expenseFormData.globalActiveInputType,
+        memberSplits: memberSplitsData,
+        createdBy: currentUser.pin || currentUser.id || 'unknown',
+        createdByName: currentUser.name || 'Unknown',
+        paidBy: expenseFormData.selectedPaidBy._id || expenseFormData.selectedPaidBy.id || expenseFormData.selectedPaidBy.pin,
+        paidByName: expenseFormData.selectedPaidBy.name || 'Unknown User'
+      };
+
+      const response = await groupService.createSplit(currentGroupData.uuid, splitData);
+      
+      if (response.success) {
+        setSplits(prev => [...prev, response.data]);
+        showSuccess('Expense added successfully!');
+        setExpensePopup({ isOpen: false, expenseData: null });
+      } else {
+        showError(response.error || 'Failed to create expense');
+      }
+    } catch (error) {
+      console.error('❌ Expense creation failed:', error);
+      showError(error.message || 'Failed to create expense. Please try again.');
+    } finally {
+      setIsAddingSplit(false);
+    }
+  };
+
+  const handleExpensePopupClose = () => {
+    setExpensePopup({ isOpen: false, expenseData: null });
+  };
+
   // Popup helper functions
   const openPopup = (config) => {
     setPopupConfig({
@@ -1070,6 +1142,17 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
             </div>
           </div>
 
+          {/* Add Expense Button */}
+          <div className="add-expense-button-container">
+            <button 
+              className="add-expense-button"
+              onClick={() => setExpensePopup({ isOpen: true, expenseData: null })}
+            >
+              <span className="add-expense-icon">+</span>
+              <span className="add-expense-text">Add an Expense</span>
+            </button>
+          </div>
+
           {/* Expense Form Section */}
           <div className="expense-form-section glass-panel">
             <div className="expense-form">
@@ -1127,39 +1210,24 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                     },
                   }}
                 />
-                <div className="date-picker-container">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
-                    selected={expenseDate}
-                    onChange={(date) => setExpenseDate(date)}
-                    dateFormat="MMM dd, yyyy"
-                    className="custom-date-picker"
-                    calendarClassName="custom-calendar"
-                    popperClassName="custom-popper"
-                    showPopperArrow={false}
-                    maxDate={new Date()}
-                    placeholderText="Select date"
-                    showMonthDropdown
-                    showYearDropdown
-                    dropdownMode="select"
-                    yearDropdownItemNumber={15}
-                    scrollableYearDropdown
-                    customInput={
-                      <TextField
-                        label="On"
-                        variant="outlined"
-                        className="mui-textfield date-field"
-                        fullWidth
-                        InputLabelProps={{
-                          shrink: true,
-                        }}
-                        sx={{
+                    label="Date"
+                    value={expenseDate ? dayjs(expenseDate) : null}
+                    onChange={(newValue) => setExpenseDate(newValue ? newValue.toDate() : new Date())}
+                    maxDate={dayjs()}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        variant: 'outlined',
+                        className: 'mui-textfield date-field',
+                        sx: {
                           '& .MuiOutlinedInput-root': {
                             color: '#ffffff',
                             fontFamily: 'Quicksand, sans-serif',
                             fontSize: '1rem',
                             fontWeight: 500,
                             borderRadius: '12px',
-                            cursor: 'pointer',
                             '& fieldset': {
                               borderColor: 'rgba(255, 255, 255, 0.3)',
                               borderWidth: '2px',
@@ -1190,14 +1258,14 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                           '& .MuiInputLabel-root.Mui-focused': {
                             color: 'var(--hover-color)',
                           },
-                          '& .MuiInputBase-input': {
-                            cursor: 'pointer',
-                          }
-                        }}
-                      />
-                    }
+                          '& .MuiSvgIcon-root': {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                          },
+                        },
+                      },
+                    }}
                   />
-                </div>
+                </LocalizationProvider>
               </div>
 
               {/* Amount and Tax Row */}
@@ -1878,6 +1946,16 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           </div>
         </Popup>
       )}
+
+      {/* Expense Popup */}
+      <ExpensePopup
+        isOpen={expensePopup.isOpen}
+        onClose={handleExpensePopupClose}
+        onSubmit={handleExpenseSubmit}
+        members={currentGroupData?.members || []}
+        currentUser={currentUser}
+        expenseData={expensePopup.expenseData}
+      />
     </div>
     </>
   )
