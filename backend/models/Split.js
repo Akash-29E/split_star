@@ -104,6 +104,10 @@ const splitSchema = new mongoose.Schema({
       required: true,
       trim: true
     },
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
     isParticipating: {
       type: Boolean,
       required: true,

@@ -1,6 +1,6 @@
 // Session management service using cookies
 const SESSION_COOKIE_NAME = 'splitstar_session';
-const SESSION_EXPIRY_DAYS = 30;
+const SESSION_EXPIRY_DAYS = 1; // 24 hours (synced with JWT token expiration)
 
 export const sessionService = {
   // Set a cookie

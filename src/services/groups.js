@@ -317,6 +317,43 @@ export const groupService = {
       console.error('❌ Add member full error:', error);
       throw new Error(error.message || 'Failed to add member');
     }
+  },
+
+  // Delete a member from a group
+  async deleteMember(groupUuid, memberId) {
+    try {
+      const url = `${apiService.baseURL}/groups/${groupUuid}/members/${memberId}`;
+      console.log('🗑️ Deleting member from group:', groupUuid, 'Member:', memberId);
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('📥 Delete member response status:', response.status);
+      
+      if (!response.ok) {
+        const responseText = await response.text();
+        console.error('❌ Delete member error response:', responseText);
+        
+        try {
+          const errorData = JSON.parse(responseText);
+          throw new Error(errorData.error || 'Failed to delete member');
+        } catch (parseError) {
+          console.error('❌ Failed to parse delete member error response:', parseError);
+          throw new Error(`Server error: ${response.status} - ${responseText.substring(0, 100)}`);
+        }
+      }
+      
+      const data = await response.json();
+      console.log('✅ Member deleted successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Delete member full error:', error);
+      throw new Error(error.message || 'Failed to delete member');
+    }
   }
 };
 

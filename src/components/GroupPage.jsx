@@ -2,9 +2,14 @@ import './GroupPage.css'
 import { groupService } from '../services/groups'
 import Toast from './Toast'
 import Popup from './Popup'
+import ExpensePopup from './ExpensePopup'
 import useToast from '../hooks/useToast'
 import { useState, useEffect, useRef } from 'react'
 import { TextField } from '@mui/material'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import dayjs from 'dayjs'
 
 function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isSharedAccess, authenticatedMember }) {
   // Use initialGroupData if provided (for shared access), otherwise use groupData
@@ -33,6 +38,7 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   
   // Expense input states
   const [splitTitle, setSplitTitle] = useState('');
+  const [expenseDate, setExpenseDate] = useState(new Date()); // Default to today
   const [amount, setAmount] = useState('');
   const [taxPercentage, setTaxPercentage] = useState('0');
   
@@ -64,6 +70,12 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
   const [imagePopup, setImagePopup] = useState({
     isOpen: false,
     imageLink: ''
+  });
+  
+  // Expense popup state
+  const [expensePopup, setExpensePopup] = useState({
+    isOpen: false,
+    expenseData: null
   });
   
   // Popup state
@@ -636,6 +648,69 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
     setImagePopup({ isOpen: false, imageLink: '' });
   };
 
+  // Expense popup handlers
+  const handleExpenseSubmit = async (expenseFormData) => {
+    try {
+      setIsAddingSplit(true);
+      
+      const memberSplitsData = expenseFormData.selectedMembers.map(memberId => {
+        const member = currentGroupData.members.find(m => m._id === memberId || m.id === memberId);
+        const expenseInfo = expenseFormData.memberExpenseData[memberId] || {};
+        
+        const isPayer = expenseFormData.selectedPaidBy._id === member?._id || 
+                       expenseFormData.selectedPaidBy._id === member?.id ||
+                       expenseFormData.selectedPaidBy.id === member?._id ||
+                       expenseFormData.selectedPaidBy.id === member?.id || 
+                       expenseFormData.selectedPaidBy.name === member?.name ||
+                       expenseFormData.selectedPaidBy.pin === member?.pin;
+        
+        return {
+          memberId: memberId,
+          memberName: member?.name || `Test Member ${memberId}`,
+          isParticipating: true,
+          paidAmount: isPayer ? (expenseFormData.baseAmount + (expenseFormData.baseAmount * expenseFormData.taxPercentage / 100)) : 0,
+          splitValue: {
+            amount: expenseInfo.amount ? parseFloat(expenseInfo.amount) : 0,
+            percentage: expenseInfo.percentage ? parseFloat(expenseInfo.percentage) : 0,
+            shares: expenseInfo.shares ? parseInt(expenseInfo.shares) : 1
+          }
+        };
+      });
+
+      const splitData = {
+        splitTitle: expenseFormData.splitTitle,
+        splitDescription: '',
+        baseAmount: expenseFormData.baseAmount,
+        taxPercentage: expenseFormData.taxPercentage,
+        splitMethod: expenseFormData.globalActiveInputType,
+        memberSplits: memberSplitsData,
+        createdBy: currentUser.pin || currentUser.id || 'unknown',
+        createdByName: currentUser.name || 'Unknown',
+        paidBy: expenseFormData.selectedPaidBy._id || expenseFormData.selectedPaidBy.id || expenseFormData.selectedPaidBy.pin,
+        paidByName: expenseFormData.selectedPaidBy.name || 'Unknown User'
+      };
+
+      const response = await groupService.createSplit(currentGroupData.uuid, splitData);
+      
+      if (response.success) {
+        setSplits(prev => [...prev, response.data]);
+        showSuccess('Expense added successfully!');
+        setExpensePopup({ isOpen: false, expenseData: null });
+      } else {
+        showError(response.error || 'Failed to create expense');
+      }
+    } catch (error) {
+      console.error('❌ Expense creation failed:', error);
+      showError(error.message || 'Failed to create expense. Please try again.');
+    } finally {
+      setIsAddingSplit(false);
+    }
+  };
+
+  const handleExpensePopupClose = () => {
+    setExpensePopup({ isOpen: false, expenseData: null });
+  };
+
   // Popup helper functions
   const openPopup = (config) => {
     setPopupConfig({
@@ -1067,392 +1142,15 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
             </div>
           </div>
 
-          {/* Expense Form Section */}
-          <div className="expense-form-section glass-panel">
-            <div className="expense-form">
-            <div className="expense-controls">
-              {/* Split Title and Amount Row - 50% each */}
-              <div className="split-title-row">
-                <TextField
-                  label="For"
-                  variant="outlined"
-                  placeholder="Dinner, Groceries, Rent"
-                  value={splitTitle}
-                  onChange={(e) => setSplitTitle(e.target.value)}
-                  className="mui-textfield split-title-field"
-                  fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      color: '#ffffff',
-                      fontFamily: 'Quicksand, sans-serif',
-                      fontSize: '1rem',
-                      fontWeight: 500,
-                      borderRadius: '12px',
-                      '& fieldset': {
-                        borderColor: 'rgba(255, 255, 255, 0.3)',
-                        borderWidth: '2px',
-                        borderRadius: '12px',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'var(--hover-color)',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'var(--hover-color)',
-                        borderWidth: '2px',
-                      },
-                      backgroundColor: 'transparent',
-                      backdropFilter: 'blur(15px)',
-                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-                      transition: 'all 0.3s ease',
-                    },
-                    '& .MuiOutlinedInput-root:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      fontFamily: 'Quicksand, sans-serif',
-                      fontWeight: 600,
-                      fontSize: '0.95rem',
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: 'var(--hover-color)',
-                    },
-                    '& .MuiInputBase-input::placeholder': {
-                      // color: 'rgba(255, 255, 255, 0.5)',
-                      // opacity: 1,
-                    },
-                  }}
-                />
-                <div className="amount-tax-container">
-                  <TextField
-                    label="Spent"
-                    variant="outlined"
-                    type="number"
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="mui-textfield amount-field"
-                    fullWidth
-                    InputProps={{
-                      startAdornment: <span style={{ color: 'rgba(255, 255, 255, 0.8)', marginRight: '6px', fontWeight: 600 }}>$</span>,
-                    }}
-                    inputProps={{
-                      step: '0.01',
-                      min: '0',
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        fontFamily: 'Quicksand, sans-serif',
-                        fontSize: '1rem',
-                        fontWeight: 500,
-                        borderRadius: '12px',
-                        '& fieldset': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                          borderWidth: '2px',
-                          borderRadius: '12px',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: 'var(--hover-color)',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: 'var(--hover-color)',
-                          borderWidth: '2px',
-                        },
-                        backgroundColor: 'transparent',
-                        backdropFilter: 'blur(15px)',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-                        transition: 'all 0.3s ease',
-                      },
-                      '& .MuiOutlinedInput-root:hover': {
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontFamily: 'Quicksand, sans-serif',
-                        fontWeight: 600,
-                        fontSize: '0.95rem',
-                        backgroundColor: 'transparent',
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: 'var(--hover-color)',
-                      },
-                      '& .MuiInputBase-input::placeholder': {
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        opacity: 1,
-                      },
-                    }}
-                  />
-                  <TextField
-                    label="+ Tax"
-                    variant="outlined"
-                    type="number"
-                    placeholder="0"
-                    value={taxPercentage}
-                    onChange={(e) => setTaxPercentage(e.target.value)}
-                    className="mui-textfield tax-field"
-                    fullWidth
-                    InputProps={{
-                      endAdornment: <span style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '6px', fontWeight: 600 }}>%</span>,
-                    }}
-                    inputProps={{
-                      step: '0.01',
-                      min: '0',
-                      max: '100',
-                    }}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: '#ffffff',
-                        fontFamily: 'Quicksand, sans-serif',
-                        fontSize: '1rem',
-                        fontWeight: 500,
-                        borderRadius: '12px',
-                        '& fieldset': {
-                          borderColor: 'rgba(255, 255, 255, 0.3)',
-                          borderWidth: '2px',
-                          borderRadius: '12px',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: 'var(--hover-color)',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: 'var(--hover-color)',
-                          borderWidth: '2px',
-                        },
-                        backgroundColor: 'transparent',
-                        backdropFilter: 'blur(15px)',
-                        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-                        transition: 'all 0.3s ease',
-                      },
-                      '& .MuiOutlinedInput-root:hover': {
-                        transform: 'translateY(-1px)',
-                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        fontFamily: 'Quicksand, sans-serif',
-                        fontWeight: 600,
-                        fontSize: '0.95rem',
-                        backgroundColor: 'transparent',
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: 'var(--hover-color)',
-                      },
-                      '& .MuiInputBase-input::placeholder': {
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        opacity: 1,
-                      },
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="expense-inputs-group">
-                {/* Paid By Dropdown */}
-                <div className="form-group">
-                  <div className="paid-by-dropdown">
-                    <button 
-                      className="paid-by-select paid-by-button" 
-                      type="button"
-                      onClick={togglePaidByDropdown}
-                    >
-                      <span className="paid-by-label">Paid by</span>
-                      <span className="paid-by-separator"></span>
-                      <span className="paid-by-name">{selectedPaidBy.name}</span>
-                      <img 
-                        src="/svg/downArrowIcon.svg"
-                        width="16" 
-                        height="16" 
-                        alt=""
-                        style={{
-                          transform: isPaidByDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 0.3s ease'
-                        }}
-                      />
-                    </button>
-                    <div className={`paid-by-dropdown-content ${isPaidByDropdownOpen ? 'open' : ''}`}>
-                      {currentGroupData?.members?.map((member) => (
-                        <div 
-                          key={member._id || member.id || member.pin}
-                          className="paid-by-option member-option"
-                          onClick={() => handlePaidBySelect(member)}
-                        >
-                          <input
-                            type="radio"
-                            name="paidBy"
-                            checked={selectedPaidBy._id === member._id || selectedPaidBy.name === member.name}
-                            onChange={() => {}} // Controlled by parent click
-                            className="member-radio"
-                          />
-                          <span className="member-name">{member.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-
-
-
-
-                {/* Members Dropdown */}
-                <div className="form-group">
-                  <div className="members-dropdown">
-                    <button 
-                      className="members-select" 
-                      type="button"
-                      onClick={toggleDropdown}
-                    >
-                      {selectedMembers.size === 0 ? 'Select Members' : `${selectedMembers.size} Member${selectedMembers.size === 1 ? '' : 's'}`}
-                      <img 
-                        src="/svg/downArrowIcon.svg"
-                        width="16" 
-                        height="16" 
-                        alt=""
-                        style={{
-                          transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 0.3s ease'
-                        }}
-                      />
-                    </button>
-                    <div className={`members-dropdown-content ${isDropdownOpen ? 'open' : ''}`}>
-                      {currentGroupData?.members && currentGroupData.members.length > 0 ? (
-                        currentGroupData.members.map((member, index) => (
-                          <label key={member._id || index} className="member-checkbox-item">
-                            <input 
-                              type="checkbox" 
-                              className="member-checkbox"
-                              checked={selectedMembers.has(member._id || index)}
-                              onChange={(e) => handleMemberSelection(member._id || index, e.target.checked)}
-                            />
-                            <span className="member-checkbox-label">{member.name}</span>
-                          </label>
-                        ))
-                      ) : (
-                        <div className="no-members">No members found</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Add Image Button */}
-              <div className="form-group">
-                <button 
-                  className="add-image-button" 
-                  type="button"
-                  onClick={handleAddImage}
-                  title="Add Image"
-                >
-                  <img 
-                    src="/svg/imageIcon.svg"
-                    width="20" 
-                    height="20" 
-                    alt="Add Image"
-                    className="image-icon"
-                  />
-                </button>
-              </div>
-              </div>
-
-              {/* Add Split Button */}
-              <div className="form-group">
-                <button 
-                  className="add-expense-button primary-btn" 
-                  type="button"
-                  onClick={handleAddExpense}
-                  disabled={isAddingSplit}
-                  title={isAddingSplit ? "Adding Split..." : "Add Split"}
-                >
-                  {isAddingSplit ? (
-                    <div className="spinner"></div>
-                  ) : (
-                    <span className="submit-text">SUBMIT</span>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Member Split Details */}
-            {selectedMembers.size > 0 && (
-              <div className="member-expense-section">
-                <h3 className="section-title">Member Split Details</h3>
-                <div className="member-expense-list">
-                  {Array.from(selectedMembers).map(memberId => {
-                    const member = currentGroupData?.members?.find(m => (m._id || currentGroupData.members.indexOf(m)) === memberId);
-                    if (!member) return null;
-                    
-                    return (
-                      <div key={memberId} className="member-expense-row">
-                        <div className="member-name">{member.name}</div>
-                        
-                        <div className="expense-field-group">
-                          <div className="input-with-prefix">
-                            <span className="input-prefix">$</span>
-                            <input 
-                              type="number" 
-                              className={`member-expense-input ${globalActiveInputType !== 'amount' ? 'visually-disabled' : ''}`}
-                              placeholder="0.00"
-                              value={memberExpenseData[memberId]?.amount || ''}
-                              onChange={(e) => {
-                                setActiveInputType('amount');
-                                updateMemberExpenseData(memberId, 'amount', e.target.value);
-                              }}
-                              onFocus={() => setActiveInputType('amount')}
-                              onClick={() => setActiveInputType('amount')}
-                              step="0.01"
-                              min="0"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="expense-field-group">
-                          <div className="input-with-suffix">
-                            <input 
-                              type="number" 
-                              className={`member-expense-input ${globalActiveInputType !== 'percentage' ? 'visually-disabled' : ''}`}
-                              placeholder="0"
-                              value={memberExpenseData[memberId]?.percentage || ''}
-                              onChange={(e) => {
-                                setActiveInputType('percentage');
-                                updateMemberExpenseData(memberId, 'percentage', e.target.value);
-                              }}
-                              onFocus={() => setActiveInputType('percentage')}
-                              onClick={() => setActiveInputType('percentage')}
-                              step="0.01"
-                              min="0"
-                              max="100"
-                            />
-                            <span className="input-suffix">%</span>
-                          </div>
-                        </div>
-
-                        <div className="expense-field-group">
-                          <div className="input-with-suffix">
-                            <input 
-                              type="number" 
-                              className={`member-expense-input ${globalActiveInputType !== 'shares' ? 'visually-disabled' : ''}`}
-                              placeholder="1"
-                              value={memberExpenseData[memberId]?.shares || ''}
-                              onChange={(e) => {
-                                setActiveInputType('shares');
-                                updateMemberExpenseData(memberId, 'shares', e.target.value);
-                              }}
-                              onFocus={() => setActiveInputType('shares')}
-                              onClick={() => setActiveInputType('shares')}
-                              min="1"
-                            />
-                            <span className="input-suffix">Shares</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            </div>
+          {/* Add Expense Button */}
+          <div className="add-expense-button-container">
+            <button 
+              className="add-expense-button"
+              onClick={() => setExpensePopup({ isOpen: true, expenseData: null })}
+            >
+              <span className="add-expense-icon">+</span>
+              <span className="add-expense-text">Add an Expense</span>
+            </button>
           </div>
 
           {/* Expense List Section */}
@@ -1688,7 +1386,12 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
                                   
                                   return (
                                     <div key={pIndex} className="participant-item">
-                                      <span className="participant-name">{memberSplit.memberName}</span>
+                                      <span className="participant-name">
+                                        {memberSplit.memberName}
+                                        {memberSplit.isDeleted && (
+                                          <span className="deleted-user-badge"> (Deleted user)</span>
+                                        )}
+                                      </span>
                                       <span className="participant-amount">
                                         ${owedAmount.toFixed(2)}
                                       </span>
@@ -1793,6 +1496,16 @@ function GroupPage({ groupData, onSettings, onMembers, initialGroupData, isShare
           </div>
         </Popup>
       )}
+
+      {/* Expense Popup */}
+      <ExpensePopup
+        isOpen={expensePopup.isOpen}
+        onClose={handleExpensePopupClose}
+        onSubmit={handleExpenseSubmit}
+        members={currentGroupData?.members || []}
+        currentUser={currentUser}
+        expenseData={expensePopup.expenseData}
+      />
     </div>
     </>
   )

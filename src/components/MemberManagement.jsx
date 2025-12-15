@@ -11,6 +11,9 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [showSharePopup, setShowSharePopup] = useState(false);
   const [selectedMemberToShare, setSelectedMemberToShare] = useState(null);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [selectedMemberToDelete, setSelectedMemberToDelete] = useState(null);
+  const [isDeletingMember, setIsDeletingMember] = useState(false);
   const { showToast } = useToast();
 
   // Use initialGroupData if provided (for shared access), otherwise use groupData
@@ -88,6 +91,47 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
     });
   };
 
+  const handleDeleteMember = (member) => {
+    setSelectedMemberToDelete(member);
+    setShowDeletePopup(true);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeletePopup(false);
+    setSelectedMemberToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedMemberToDelete) return;
+
+    setIsDeletingMember(true);
+    
+    try {
+      const response = await groupService.deleteMember(
+        currentGroupData.uuid,
+        selectedMemberToDelete._id || selectedMemberToDelete.id
+      );
+      
+      if (response.success) {
+        showToast(`${selectedMemberToDelete.name} has been removed from the group`, 'success');
+        
+        // Refresh group data if callback provided
+        if (onGroupUpdate) {
+          await onGroupUpdate();
+        }
+        
+        // Close popup
+        setShowDeletePopup(false);
+        setSelectedMemberToDelete(null);
+      }
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      showToast(error.message || 'Failed to delete member', 'error');
+    } finally {
+      setIsDeletingMember(false);
+    }
+  };
+
   return (
     <div className="main-content">
       <div className="member-management-container">
@@ -151,7 +195,11 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
                             <button className="member-action-icon" title="Edit member">
                               <img src="/svg/editIcon.svg" width="16" height="16" alt="Edit" />
                             </button>
-                            <button className="member-action-icon" title="Delete member">
+                            <button 
+                              className="member-action-icon" 
+                              title="Delete member"
+                              onClick={() => handleDeleteMember(member)}
+                            >
                               <img src="/svg/deleteIcon.svg" width="16" height="16" alt="Delete" />
                             </button>
                             <button 
@@ -252,6 +300,21 @@ function MemberManagement({ groupData, onBack, initialGroupData, isSharedAccess,
           </div>
         </div>
       </Popup>
+
+      {/* Delete Member Popup */}
+      <Popup
+        isOpen={showDeletePopup}
+        onClose={isDeletingMember ? undefined : handleCancelDelete}
+        title="Delete Member"
+        subtitle={`Are you sure you want to remove ${selectedMemberToDelete?.name || 'this member'}?`}
+        message="This member will be removed from the group. Their past expenses will remain but marked as deleted."
+        type="error"
+        primaryButtonText={isDeletingMember ? "Deleting..." : "Delete"}
+        secondaryButtonText="Cancel"
+        onPrimaryClick={handleConfirmDelete}
+        onSecondaryClick={handleCancelDelete}
+        showSecondaryButton={!isDeletingMember}
+      />
     </div>
   );
 }
