@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Generator: SVG Repo Mixer Tools -->
+
+<svg
+   fill="#000000"
+   width="800px"
+   height="800px"
+   viewBox="0 0 24 24"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="profile-svgrepo-com.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#ffffff"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="0.796875"
+     inkscape:cx="459.29412"
+     inkscape:cy="377.09804"
+     inkscape:window-width="2880"
+     inkscape:window-height="1514"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     id="path222"
+     style="display:inline;mix-blend-mode:darken;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.06099;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:normal"
+     d="M 14.849811,2.1708811 V 4.014863 a 2.7422195,2.7422195 0 0 1 0,5.4054929 v 1.8440351 a 4.5703657,4.5703657 0 0 0 0,-9.0935099 z m 4.331367,11.0906169 v 1.930318 a 2.7422195,2.7422195 0 0 1 1.603502,2.49467 v 3.656311 a 0.91407313,0.91407313 0 0 0 1.828128,0 v -3.656311 a 4.5758501,4.5758501 0 0 0 -3.43163,-4.424988 z" />
+  <path
+     d="M 9.3092335,11.199305 A 4.5703657,4.5703657 0 1 0 4.7388679,6.6289392 4.5758501,4.5758501 0 0 0 9.3092335,11.199305 Z m 0,-7.3125851 A 2.7422195,2.7422195 0 1 1 6.5670141,6.6289392 2.7422195,2.7422195 0 0 1 9.3092335,3.8867199 Z M 1.0825753,21.254109 V 17.597817 A 4.5758501,4.5758501 0 0 1 5.652941,13.027451 h 7.312585 a 4.5758501,4.5758501 0 0 1 4.570365,4.570366 v 3.656292 a 0.91407313,0.91407313 0 0 1 -1.828146,0 v -3.656292 a 2.7422195,2.7422195 0 0 0 -2.742219,-2.74222 H 5.652941 a 2.7422195,2.7422195 0 0 0 -2.7422194,2.74222 v 3.656292 a 0.91407315,0.91407315 0 0 1 -1.8281463,0 z"
+     id="path1"
+     style="stroke-width:0.914073" />
+</svg>
