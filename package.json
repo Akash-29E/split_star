@@ -1,5 +1,6 @@
 {
   "name": "split_star",
+  "homepage": "https://www.splitstar.app/",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,6 +9,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "predeploy": "npm run build && cp CNAME dist/CNAME",
+    "deploy": "gh-pages -d dist",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "vite",
     "dev:full": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
@@ -19,6 +22,7 @@
     "@mui/material": "^7.3.5",
     "@mui/x-date-pickers": "^8.22.0",
     "dayjs": "^1.11.19",
+    "gh-pages": "^6.3.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^9.0.0",
