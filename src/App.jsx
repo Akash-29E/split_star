@@ -10,7 +10,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-route
 import { groupService } from './services/groups'
 import { sessionService } from './services/session'
 import { useState, useEffect } from 'react'
-import { useToast } from './hooks/useToast'
+import useToast from './hooks/useToast'
 
 // Create Group page component
 function CreateGroupPage({ setCurrentUser, currentUser }) {
