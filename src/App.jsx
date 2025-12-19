@@ -5,20 +5,20 @@ import CreateGroup from './components/CreateGroup'
 import SharedGroupAccess from './components/SharedGroupAccess'
 import UserGroups from './components/UserGroups'
 import UserSettings from './components/UserSettings'
+import Toast from './components/Toast'
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom'
 import { groupService } from './services/groups'
 import { sessionService } from './services/session'
 import { useState, useEffect } from 'react'
+import { useToast } from './hooks/useToast'
 
 // Create Group page component
 function CreateGroupPage({ setCurrentUser, currentUser }) {
   const navigate = useNavigate()
-  const [error, setError] = useState(null)
+  const { toast, showError, hideToast } = useToast()
 
   const handleCreateGroup = async (data) => {
     try {
-      setError(null)
-      
       const transformedData = groupService.transformGroupData(data)
       const response = await groupService.createGroup(transformedData)
       
@@ -50,23 +50,23 @@ function CreateGroupPage({ setCurrentUser, currentUser }) {
         })
       } else {
         console.error('❌ Failed to create group:', response.error)
-        setError(response.error)
+        showError(response.error || 'Failed to create group. Please try again.')
       }
     } catch (error) {
       console.error('❌ Group creation failed:', error)
-      setError('Failed to create group. Please try again.')
+      showError('Failed to create group. Please try again.')
     }
   }
 
   return (
     <div className="create-group-page">
-      {error && (
-        <div className="error-banner">
-          <span>{error}</span>
-          <button onClick={() => setError(null)}>×</button>
-        </div>
-      )}
       <CreateGroup onCreateGroup={handleCreateGroup} currentUser={currentUser} />
+      <Toast 
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   )
 }
