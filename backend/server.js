@@ -28,6 +28,7 @@ const limiter = rateLimit({
 const allowedOrigins = [
   'https://www.splitstar.app',
   'https://splitstar.app',
+  'https://splitstar-production.up.railway.app', // Railway backend
   'http://localhost:5173',
   'http://localhost:5174', 
   'http://localhost:5175',
