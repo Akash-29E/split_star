@@ -1,5 +1,7 @@
 import './LandingPage.css'
 import Button from './Button'
+import Footer from './Footer'
+import { Link } from 'react-router-dom'
 
 function LandingPage({ onCreateGroup }) {
   const features = [
@@ -43,7 +45,7 @@ function LandingPage({ onCreateGroup }) {
           <div className="hero-text">
             <h1 className="hero-title">
               Split expenses with
-              <span className="highlight"> Split Star</span>
+              <span className="highlight"> Splitstar</span>
             </h1>
             <p className="hero-subtitle">
               The easiest way to split bills, track expenses, and settle up with friends, 
@@ -96,7 +98,7 @@ function LandingPage({ onCreateGroup }) {
       {/* Features Section */}
       <section className="features-section">
         <div className="features-content">
-          <h2 className="features-title">Why Choose Split Star?</h2>
+          <h2 className="features-title">Why Choose Splitstar?</h2>
           <p className="features-subtitle">
             Powerful features designed to make expense sharing simple and stress-free
           </p>
@@ -118,7 +120,7 @@ function LandingPage({ onCreateGroup }) {
         <div className="cta-content">
           <h2 className="cta-title">Ready to Start Splitting?</h2>
           <p className="cta-subtitle">
-            Join thousands of users who have simplified their expense sharing with Split Star
+            Join thousands of users who have simplified their expense sharing with Splitstar
           </p>
           <Button 
             variant="primary" 
@@ -130,20 +132,7 @@ function LandingPage({ onCreateGroup }) {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="landing-footer">
-        <div className="footer-content">
-          <div className="footer-logo">
-            <span className="logo-text">Split Star</span>
-          </div>
-          <div className="footer-links">
-            <a href="#features">Features</a>
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
-            <a href="#privacy">Privacy</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

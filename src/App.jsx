@@ -1,6 +1,9 @@
 import './App.css'
 import Navbar from './components/Navbar'
 import LandingPage from './components/LandingPage'
+import Features from './components/Features'
+import About from './components/About'
+import Privacy from './components/Privacy'
 import CreateGroup from './components/CreateGroup'
 import SharedGroupAccess from './components/SharedGroupAccess'
 import UserGroups from './components/UserGroups'
@@ -110,6 +113,9 @@ function AppContent() {
       <main className="main-container">
         <Routes>
           <Route path="/" element={<LandingPage onCreateGroup={() => navigate('/create')} />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/create" element={<CreateGroupPage setCurrentUser={setCurrentUser} currentUser={currentUser} />} />
           <Route path="/groups" element={<UserGroups onBack={handleNavHome} />} />
           <Route path="/settings" element={<UserSettings onBack={handleNavHome} currentUser={currentUser} onUpdateUser={setCurrentUser} />} />

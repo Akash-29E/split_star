@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import './Navbar.css'
 import { sessionService } from '../services/session'
 import Popup from './Popup'
@@ -202,8 +202,8 @@ function Navbar({ onHomeClick, user, onLogout }) {
         </div>
         <div className="navbar-menu">
           <a href="#home" className="nav-link" onClick={handleHomeClick}>Home</a>
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#about" className="nav-link">About</a>
+          <Link to="/features" className="nav-link">Features</Link>
+          <Link to="/about" className="nav-link">About</Link>
         </div>
         {user ? (
           <div className="navbar-user-profile" ref={dropdownRef}>
